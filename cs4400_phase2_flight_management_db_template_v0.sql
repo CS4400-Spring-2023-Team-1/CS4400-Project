@@ -20,15 +20,21 @@ CREATE TABLE flight (
     routeID VARCHAR(50) NOT NULL,
     PRIMARY KEY (flightID),
     FOREIGN KEY (routeID) REFERENCES route(routeID)
-) 
+);
 
 CREATE TABLE route (
-	routeID VARCHAR(50) NOT NULL
+	routeID VARCHAR(50) NOT NULL,
     PRIMARY KEY (routeID)
-)
+);
 
 CREATE TABLE leg (
 	legID VARCHAR(10) NOT NULL,
     distance decimal(5,0) NOT NULL,
     PRIMARY KEY (legID)
-)
+);
+
+CREATE TABLE airport (
+	airportID CHAR(3) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    
+);
