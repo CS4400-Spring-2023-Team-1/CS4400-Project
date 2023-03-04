@@ -14,3 +14,13 @@ create database if not exists flight_management;
 use flight_management;
 
 -- Define the database structures and enter the denormalized data
+
+CREATE TABLE flight (
+	flightID VARCHAR(10) NOT NULL UNIQUE,
+    routeID VARCHAR(50) NOT NULL,
+    
+    
+    
+    
+    PRIMARY KEY (flightID)
+) 
