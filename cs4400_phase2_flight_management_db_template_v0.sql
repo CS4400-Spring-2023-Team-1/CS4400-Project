@@ -30,11 +30,15 @@ CREATE TABLE route (
 CREATE TABLE leg (
 	legID VARCHAR(10) NOT NULL,
     distance decimal(5,0) NOT NULL,
-    PRIMARY KEY (legID)
+    airportID CHAR(3) NOT NULL,
+    PRIMARY KEY (legID),
+    FOREIGN KEY (airportID) REFERENCES airport(airportID)
 );
 
 CREATE TABLE airport (
 	airportID CHAR(3) NOT NULL,
     name VARCHAR(100) NOT NULL,
-    
+    # Do we need to express city and state together as address?
+    city VARCHAR(20) NOT NULL,
+    state CHAR(2) NOT NULL
 );
