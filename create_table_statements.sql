@@ -1,0 +1,1 @@
+# This is the starting file for the create table statements.
