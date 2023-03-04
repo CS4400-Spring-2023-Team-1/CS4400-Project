@@ -18,9 +18,17 @@ use flight_management;
 CREATE TABLE flight (
 	flightID VARCHAR(10) NOT NULL UNIQUE,
     routeID VARCHAR(50) NOT NULL,
-    
-    
-    
-    
-    PRIMARY KEY (flightID)
+    PRIMARY KEY (flightID),
+    FOREIGN KEY (routeID) REFERENCES route(routeID)
 ) 
+
+CREATE TABLE route (
+	routeID VARCHAR(50) NOT NULL
+    PRIMARY KEY (routeID)
+)
+
+CREATE TABLE leg (
+	legID VARCHAR(10) NOT NULL,
+    distance decimal(5,0) NOT NULL,
+    PRIMARY KEY (legID)
+)
