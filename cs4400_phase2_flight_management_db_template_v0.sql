@@ -1,5 +1,5 @@
--- CS4400: Introduction to Database Systems: Monday, January 30, 2023
--- Flight Management Course Project Database TEMPLATE (v1.0)
+/* CS 4400 Team 1 Phase 2 Code
+Authors: Sean Liu, Sean Johnson, Vicente Miranda, McKenna Hall*/
 
 /* This is a standard preamble for most of our scripts.  The intent is to establish
 a consistent environment for the database behavior. */
@@ -23,12 +23,12 @@ CREATE TABLE flight (
 );
 
 CREATE TABLE route (
-	routeID VARCHAR(50) NOT NULL,
+	routeID VARCHAR(50) NOT NULL UNIQUE,
     PRIMARY KEY (routeID)
 );
 
 CREATE TABLE leg (
-	legID VARCHAR(10) NOT NULL,
+	legID VARCHAR(10) NOT NULL UNIQUE,
     distance decimal(5,0) NOT NULL,
     airportID CHAR(3) NOT NULL,
     PRIMARY KEY (legID),
@@ -36,9 +36,21 @@ CREATE TABLE leg (
 );
 
 CREATE TABLE airport (
-	airportID CHAR(3) NOT NULL,
+	airportID CHAR(3) NOT NULL UNIQUE,
     name VARCHAR(100) NOT NULL,
-    # Do we need to express city and state together as address?
     city VARCHAR(20) NOT NULL,
-    state CHAR(2) NOT NULL
+    state CHAR(2) NOT NULL,
+    # Need information about location_flag ???
+    locID VARCHAR(10) NOT NULL,
+    PRIMARY KEY (airportID),
+    FOREIGN KEY (locID)
+);
+
+CREATE TABLE airplane (
+	airlineID VARCHAR(20) NOT NULL,
+    tail_num CHAR(6) NOT NULL,
+    seat_cap INT NOT NULL,
+    speed INT NOT NULL,
+    flightID VARCHAR(10) NOT NULL
+    # Need help with the rest of the attributes of airplane.
 );
