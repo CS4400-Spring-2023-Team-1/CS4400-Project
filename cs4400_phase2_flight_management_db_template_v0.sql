@@ -42,8 +42,8 @@ CREATE TABLE airport (
     state CHAR(2) NOT NULL,
     # Need information about location_flag ???
     locID VARCHAR(10) NOT NULL,
-    PRIMARY KEY (airportID),
-    FOREIGN KEY (locID)
+    PRIMARY KEY (airportID)
+    #FOREIGN KEY (locID) REFERENCES 
 );
 
 CREATE TABLE airplane (
@@ -53,4 +53,12 @@ CREATE TABLE airplane (
     speed INT NOT NULL,
     flightID VARCHAR(10) NOT NULL
     # Need help with the rest of the attributes of airplane.
+);
+
+# Need help with prop and jet
+
+CREATE TABLE airline (
+	airlineID VARCHAR(20) NOT NULL UNIQUE,
+    revenue INT NOT NULL,
+    PRIMARY KEY (airlineID)
 );
