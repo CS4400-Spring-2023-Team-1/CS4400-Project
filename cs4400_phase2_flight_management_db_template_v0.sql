@@ -120,7 +120,7 @@ CREATE TABLE ticket (
 CREATE TABLE contains(
 	routeID VARCHAR(50) NOT NULL,
     legID VARCHAR(10) NOT NULL,
-    # Figure out sequence later.
+    sequence INT NOT NULL,
     FOREIGN KEY (routeID) REFERENCES route(routeID),
     FOREIGN KEY (legID) REFERENCES leg(legID)
 );
