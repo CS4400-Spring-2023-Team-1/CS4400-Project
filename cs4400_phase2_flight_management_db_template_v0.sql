@@ -14,23 +14,6 @@ create database if not exists flight_management;
 use flight_management;
 
 -- Define the database structures and enter the denormalized data
--- mk test
-/* CS 4400 Team 1 Phase 2 Code
-Authors: Sean Liu, Sean Johnson, Vicente Miranda, McKenna Hall*/
-
-/* This is a standard preamble for most of our scripts.  The intent is to establish
-a consistent environment for the database behavior. */
-set global transaction isolation level serializable;
-set global SQL_MODE = 'ANSI,TRADITIONAL';
-set names utf8mb4;
-set SQL_SAFE_UPDATES = 0;
-set @thisDatabase = 'flight_management';
-
-drop database if exists flight_management;
-create database if not exists flight_management;
-use flight_management;
-
--- Define the database structures and enter the denormalized data
 
 
 CREATE TABLE location (
