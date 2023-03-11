@@ -15,25 +15,16 @@ use flight_management;
 
 -- Define the database structures and enter the denormalized data
 -- mk test
+CREATE TABLE route (
+	routeID VARCHAR(50) NOT NULL UNIQUE,
+    PRIMARY KEY (routeID)
+);
 
 CREATE TABLE flight (
 	flightID VARCHAR(10) NOT NULL UNIQUE,
     routeID VARCHAR(50) NOT NULL,
     PRIMARY KEY (flightID),
     FOREIGN KEY (routeID) REFERENCES route(routeID)
-);
-
-CREATE TABLE route (
-	routeID VARCHAR(50) NOT NULL UNIQUE,
-    PRIMARY KEY (routeID)
-);
-
-CREATE TABLE leg (
-	legID VARCHAR(10) NOT NULL UNIQUE,
-    distance decimal(5,0) NOT NULL,
-    airportID CHAR(3) NOT NULL,
-    PRIMARY KEY (legID),
-    FOREIGN KEY (airportID) REFERENCES airport(airportID)
 );
 
 CREATE TABLE airport (
@@ -45,6 +36,19 @@ CREATE TABLE airport (
     locID VARCHAR(15) NOT NULL,
     PRIMARY KEY (airportID),
     FOREIGN KEY (locID) REFERENCES location(locID)
+);
+
+CREATE TABLE leg (
+	legID VARCHAR(10) NOT NULL UNIQUE,
+    distance decimal(5,0) NOT NULL,
+    airportID CHAR(3) NOT NULL,
+    PRIMARY KEY (legID),
+    FOREIGN KEY (airportID) REFERENCES airport(airportID)
+);
+
+CREATE TABLE location (
+	locID VARCHAR(15) NOT NULL UNIQUE,
+    PRIMARY KEY (locID)
 );
 
 CREATE TABLE airplane (
@@ -64,11 +68,6 @@ CREATE TABLE airline (
     PRIMARY KEY (airlineID)
 );
 
-CREATE TABLE location (
-	locID VARCHAR(15) NOT NULL UNIQUE,
-    PRIMARY KEY (locID)
-);
-
 CREATE TABLE ticket (
 	ticketID VARCHAR(15) NOT NULL UNIQUE,
     cost INT NOT NULL,
@@ -76,8 +75,8 @@ CREATE TABLE ticket (
     airportID CHAR(3) NOT NULL,
     personID VARCHAR(5) NOT NULL, 
     PRIMARY KEY (ticketID),
-    FOREIGN KEY (flightID) REFERENCES flight(flightID)
-    FOREIGN KEY (airportID) REFERENCES airport(airportID)
+    FOREIGN KEY (flightID) REFERENCES flight(flightID),
+    FOREIGN KEY (airportID) REFERENCES airport(airportID),
     FOREIGN KEY (personID) REFERENCES person(airportID)
 );
 
@@ -86,5 +85,5 @@ CREATE TABLE person (
     first_name VARCHAR(15) NOT NULL,
     last_name VARCHAR(15) NOT NULL,
     # person_type- need clarification about this
-    
+    locID VARCHAR(15) NOT NULL
 );
