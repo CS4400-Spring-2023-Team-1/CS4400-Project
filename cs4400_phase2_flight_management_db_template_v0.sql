@@ -14,6 +14,7 @@ create database if not exists flight_management;
 use flight_management;
 
 -- Define the database structures and enter the denormalized data
+-- mk test
 
 CREATE TABLE flight (
 	flightID VARCHAR(10) NOT NULL UNIQUE,
