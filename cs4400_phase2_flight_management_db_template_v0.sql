@@ -28,7 +28,7 @@ CREATE TABLE airport (
     state CHAR(2) NOT NULL,
     locID VARCHAR(15) NOT NULL,
     PRIMARY KEY (airportID),
-    FOREIGN KEY (locID) REFERENCES location(locID)
+    FOREIGN KEY (locID) REFERENCES location(locID) ON DELETE SET NULL
 );
 
 CREATE TABLE leg (
@@ -36,7 +36,7 @@ CREATE TABLE leg (
     distance decimal(5,0) NOT NULL,
     airportID CHAR(3) NOT NULL,
     PRIMARY KEY (legID),
-    FOREIGN KEY (airportID) REFERENCES airport(airportID)
+    FOREIGN KEY (airportID) REFERENCES airport(airportID) ON DELETE CASCADE
 );
 
 CREATE TABLE route (
@@ -48,7 +48,7 @@ CREATE TABLE flight (
 	flightID VARCHAR(10) NOT NULL UNIQUE,
     routeID VARCHAR(50) NOT NULL,
     PRIMARY KEY (flightID),
-    FOREIGN KEY (routeID) REFERENCES route(routeID)
+    FOREIGN KEY (routeID) REFERENCES route(routeID) ON DELETE SET NULL
 );
 
 CREATE TABLE airplane (
@@ -56,15 +56,16 @@ CREATE TABLE airplane (
     tail_num CHAR(6) NOT NULL,
     seat_cap INT NOT NULL,
     speed INT NOT NULL,
-    flightID VARCHAR(10) NOT NULL,
+    flightID VARCHAR(10),
     progress VARCHAR(15), -- What are we using this for?
     status VARCHAR(15), -- What are we using this for?
     next_time VARCHAR(15), -- What are we using this for?
     airplane_type VARCHAR(4),
     locID VARCHAR(15),
-    FOREIGN KEY (airlineID) REFERENCES airline(airlineID),
-    FOREIGN KEY (flightID) REFERENCES flight(flightID),
-    FOREIGN KEY (locID) REFERENCES location(locID)
+
+    FOREIGN KEY (airlineID) REFERENCES airline(airlineID) ON DELETE CASCADE,
+    FOREIGN KEY (flightID) REFERENCES flight(flightID) ON DELETE SET NULL,
+    FOREIGN KEY (locID) REFERENCES location(locID) ON DELETE SET NULL
 );
 
 CREATE TABLE prop (
@@ -72,16 +73,19 @@ CREATE TABLE prop (
     tail_num CHAR(6) NOT NULL,
     props INT NOT NULL,
     skids INT NOT NULL,
-    FOREIGN KEY (airlineID) REFERENCES airplane(airlineID),
-    FOREIGN KEY (tail_num) REFERENCES airplane(tail_num)
+    
+    FOREIGN KEY (airlineID, tail_num) REFERENCES airplane(airlineID, tail_num) 
+		ON UPDATE CASCADE
+		ON DELETE CASCADE
 );
 
 CREATE TABLE jet (
 	airlineID VARCHAR(20) NOT NULL,
     tail_num CHAR(6) NOT NULL,
     engines INT NOT NULL,
-    FOREIGN KEY (airlineID) REFERENCES airplane(airlineID),
-    FOREIGN KEY (tail_num) REFERENCES airplane(tail_num)
+	FOREIGN KEY (airlineID, tail_num) REFERENCES airplane(airlineID, tail_num) 
+		ON UPDATE CASCADE
+		ON DELETE CASCADE
 );
 
 # Need help with prop and jet
@@ -97,7 +101,8 @@ CREATE TABLE person (
     first_name VARCHAR(15) NOT NULL,
     last_name VARCHAR(15) NOT NULL,
     person_type VARCHAR(15) NOT NULL, -- Should we do it this way?
-    locID VARCHAR(15) NOT NULL
+    locID VARCHAR(15) NOT NULL,
+    PRIMARY KEY (personID)
 );
 
 CREATE TABLE ticket (
@@ -107,26 +112,28 @@ CREATE TABLE ticket (
     airportID CHAR(3) NOT NULL,
     personID VARCHAR(5) NOT NULL, 
     PRIMARY KEY (ticketID),
-    FOREIGN KEY (flightID) REFERENCES flight(flightID),
-    FOREIGN KEY (airportID) REFERENCES airport(airportID),
-    FOREIGN KEY (personID) REFERENCES person(personID)
+    FOREIGN KEY (flightID) REFERENCES flight(flightID) ON DELETE CASCADE,
+    FOREIGN KEY (airportID) REFERENCES airport(airportID) ON DELETE CASCADE,
+    FOREIGN KEY (personID) REFERENCES person(personID) ON DELETE CASCADE
 );
 
 CREATE TABLE contains(
 	routeID VARCHAR(50) NOT NULL,
-    legID VARCHAR(10) NOT NULL
+    legID VARCHAR(10) NOT NULL,
     # Figure out sequence later.
+    FOREIGN KEY (routeID) REFERENCES route(routeID),
+    FOREIGN KEY (legID) REFERENCES leg(legID)
 );
 CREATE TABLE seat (
 	seat_num INT NOT NULL UNIQUE,
     ticketID VARCHAR(15) NOT NULL,
     PRIMARY KEY (seat_num),
-    FOREIGN KEY (ticketID) REFERENCES ticket(ticketID)
+    FOREIGN KEY (ticketID) REFERENCES ticket(ticketID) ON DELETE CASCADE
 );
 
 CREATE TABLE license (
-	personID VARCHAR(5) NOT NULL,
     taxID CHAR(11) NOT NULL,
-    license VARCHAR(10) NOT NULL
+    license VARCHAR(10) NOT NULL,
+    FOREIGN KEY (taxID) REFERENCES pilot(taxID)
 );
 
