@@ -26,7 +26,6 @@ CREATE TABLE airport (
     name VARCHAR(100) NOT NULL,
     city VARCHAR(20) NOT NULL,
     state CHAR(2) NOT NULL,
-    # Need information about location_flag ???
     locID VARCHAR(15) NOT NULL,
     PRIMARY KEY (airportID),
     FOREIGN KEY (locID) REFERENCES location(locID)
@@ -57,8 +56,32 @@ CREATE TABLE airplane (
     tail_num CHAR(6) NOT NULL,
     seat_cap INT NOT NULL,
     speed INT NOT NULL,
-    flightID VARCHAR(10) NOT NULL
-    # Need help with the rest of the attributes of airplane.
+    flightID VARCHAR(10) NOT NULL,
+    progress VARCHAR(15), -- What are we using this for?
+    status VARCHAR(15), -- What are we using this for?
+    next_time VARCHAR(15), -- What are we using this for?
+    airplane_type VARCHAR(4),
+    locID VARCHAR(15),
+    FOREIGN KEY (airlineID) REFERENCES airline(airlineID),
+    FOREIGN KEY (flightID) REFERENCES flight(flightID),
+    FOREIGN KEY (locID) REFERENCES location(locID)
+);
+
+CREATE TABLE prop (
+	airlineID VARCHAR(20) NOT NULL,
+    tail_num CHAR(6) NOT NULL,
+    props INT NOT NULL,
+    skids INT NOT NULL,
+    FOREIGN KEY (airlineID) REFERENCES airplane(airlineID),
+    FOREIGN KEY (tail_num) REFERENCES airplane(tail_num)
+);
+
+CREATE TABLE jet (
+	airlineID VARCHAR(20) NOT NULL,
+    tail_num CHAR(6) NOT NULL,
+    engines INT NOT NULL,
+    FOREIGN KEY (airlineID) REFERENCES airplane(airlineID),
+    FOREIGN KEY (tail_num) REFERENCES airplane(tail_num)
 );
 
 # Need help with prop and jet
@@ -73,7 +96,7 @@ CREATE TABLE person (
 	personID VARCHAR(5) NOT NULL UNIQUE,
     first_name VARCHAR(15) NOT NULL,
     last_name VARCHAR(15) NOT NULL,
-    # person_type- need clarification about this
+    person_type VARCHAR(15) NOT NULL, -- Should we do it this way?
     locID VARCHAR(15) NOT NULL
 );
 
