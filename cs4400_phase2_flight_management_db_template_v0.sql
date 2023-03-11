@@ -41,9 +41,9 @@ CREATE TABLE airport (
     city VARCHAR(20) NOT NULL,
     state CHAR(2) NOT NULL,
     # Need information about location_flag ???
-    locID VARCHAR(10) NOT NULL,
-    PRIMARY KEY (airportID)
-    #FOREIGN KEY (locID) REFERENCES 
+    locID VARCHAR(15) NOT NULL,
+    PRIMARY KEY (airportID),
+    FOREIGN KEY (locID) REFERENCES location(locID)
 );
 
 CREATE TABLE airplane (
@@ -72,7 +72,8 @@ CREATE TABLE ticket (
 	ticketID VARCHAR(15) NOT NULL UNIQUE,
     cost INT NOT NULL,
     flightID VARCHAR(10) NOT NULL,
-    airportID CHAR(3) NOT NULL
+    airportID CHAR(3) NOT NULL,
+    personID VARCHAR(5) NOT NULL, 
     PRIMARY KEY (ticketID),
     FOREIGN KEY (flightID) REFERENCES flight(flightID)
     FOREIGN KEY (airportID) REFERENCES airport(airportID)
@@ -80,5 +81,9 @@ CREATE TABLE ticket (
 );
 
 CREATE TABLE person (
-
+	personID VARCHAR(5) NOT NULL UNIQUE,
+    first_name VARCHAR(15) NOT NULL,
+    last_name VARCHAR(15) NOT NULL,
+    # person_type- need clarification about this
+    
 );
