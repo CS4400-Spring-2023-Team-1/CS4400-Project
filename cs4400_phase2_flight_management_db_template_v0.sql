@@ -62,3 +62,23 @@ CREATE TABLE airline (
     revenue INT NOT NULL,
     PRIMARY KEY (airlineID)
 );
+
+CREATE TABLE location (
+	locID VARCHAR(15) NOT NULL UNIQUE,
+    PRIMARY KEY (locID)
+);
+
+CREATE TABLE ticket (
+	ticketID VARCHAR(15) NOT NULL UNIQUE,
+    cost INT NOT NULL,
+    flightID VARCHAR(10) NOT NULL,
+    airportID CHAR(3) NOT NULL
+    PRIMARY KEY (ticketID),
+    FOREIGN KEY (flightID) REFERENCES flight(flightID)
+    FOREIGN KEY (airportID) REFERENCES airport(airportID)
+    FOREIGN KEY (personID) REFERENCES person(airportID)
+);
+
+CREATE TABLE person (
+
+);
