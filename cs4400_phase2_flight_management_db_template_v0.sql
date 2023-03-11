@@ -88,4 +88,21 @@ CREATE TABLE ticket (
     FOREIGN KEY (personID) REFERENCES person(personID)
 );
 
+CREATE TABLE contains(
+	routeID VARCHAR(50) NOT NULL,
+    legID VARCHAR(10) NOT NULL
+    # Figure out sequence later.
+);
+CREATE TABLE seat (
+	seat_num INT NOT NULL UNIQUE,
+    ticketID VARCHAR(15) NOT NULL,
+    PRIMARY KEY (seat_num),
+    FOREIGN KEY (ticketID) REFERENCES ticket(ticketID)
+);
+
+CREATE TABLE license (
+	personID VARCHAR(5) NOT NULL,
+    taxID CHAR(11) NOT NULL,
+    license VARCHAR(10) NOT NULL
+);
 
