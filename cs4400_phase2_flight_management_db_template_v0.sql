@@ -26,7 +26,6 @@ CREATE TABLE airport (
     name VARCHAR(100) NOT NULL,
     city VARCHAR(20) NOT NULL,
     state CHAR(2) NOT NULL,
-    # Need information about location_flag ???
     locID VARCHAR(15) NOT NULL,
     PRIMARY KEY (airportID),
     FOREIGN KEY (locID) REFERENCES location(locID)
@@ -86,7 +85,7 @@ CREATE TABLE ticket (
     PRIMARY KEY (ticketID),
     FOREIGN KEY (flightID) REFERENCES flight(flightID),
     FOREIGN KEY (airportID) REFERENCES airport(airportID),
-    FOREIGN KEY (personID) REFERENCES person(airportID)
+    FOREIGN KEY (personID) REFERENCES person(personID)
 );
 
 
