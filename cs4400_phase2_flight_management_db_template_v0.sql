@@ -66,7 +66,7 @@ CREATE TABLE airplane (
     seat_cap INT NOT NULL,
     speed INT NOT NULL,
     flightID VARCHAR(10),
-    progress VARCHAR(15), -- What are we using this for?
+    progress INT, -- What are we using this for?
     status VARCHAR(15), -- What are we using this for?
     next_time VARCHAR(15), -- What are we using this for?
     airplane_type VARCHAR(4),
