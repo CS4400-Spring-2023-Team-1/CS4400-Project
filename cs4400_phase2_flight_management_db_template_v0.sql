@@ -54,6 +54,12 @@ CREATE TABLE flight (
 		ON DELETE RESTRICT
 );
 
+CREATE TABLE airline (
+	airlineID VARCHAR(20) NOT NULL UNIQUE,
+    revenue INT NOT NULL,
+    PRIMARY KEY (airlineID)
+);
+
 CREATE TABLE airplane (
 	airlineID VARCHAR(20) NOT NULL,
     tail_num CHAR(6) NOT NULL,
@@ -65,6 +71,8 @@ CREATE TABLE airplane (
     next_time VARCHAR(15), -- What are we using this for?
     airplane_type VARCHAR(4),
     locID VARCHAR(15),
+    
+    PRIMARY KEY (airlineID, tail_num),
 
     FOREIGN KEY (airlineID) REFERENCES airline(airlineID)
 		ON DELETE RESTRICT,
@@ -77,10 +85,10 @@ CREATE TABLE airplane (
 CREATE TABLE prop (
 	airlineID VARCHAR(20) NOT NULL,
     tail_num CHAR(6) NOT NULL,
-    props INT NOT NULL,
-    skids INT NOT NULL,
+    props INT,
+    skids INT,
     
-    FOREIGN KEY (airlineID, tail_num) REFERENCES airplane(airlineID, tail_num) 
+    CONSTRAINT airplaneID FOREIGN KEY (airlineID, tail_num) REFERENCES airplane(airlineID, tail_num) 
 		ON DELETE CASCADE
         ON UPDATE CASCADE
 );
@@ -88,18 +96,10 @@ CREATE TABLE prop (
 CREATE TABLE jet (
 	airlineID VARCHAR(20) NOT NULL,
     tail_num CHAR(6) NOT NULL,
-    engines INT NOT NULL,
+    engines INT,
 	FOREIGN KEY (airlineID, tail_num) REFERENCES airplane(airlineID, tail_num) 
 		ON DELETE CASCADE
         ON UPDATE CASCADE
-);
-
-# Need help with prop and jet
-
-CREATE TABLE airline (
-	airlineID VARCHAR(20) NOT NULL UNIQUE,
-    revenue INT NOT NULL,
-    PRIMARY KEY (airlineID)
 );
 
 CREATE TABLE person (
@@ -110,6 +110,33 @@ CREATE TABLE person (
     PRIMARY KEY (personID),
     FOREIGN KEY (locID) REFERENCES location(locID)
 		ON DELETE RESTRICT
+);
+
+CREATE TABLE pilot (
+	personID VARCHAR(5) NOT NULL,
+	taxID CHAR(11) NOT NULL,
+    experience INT,
+    airlineID VARCHAR(20),
+    tail_num VARCHAR(6),
+    
+    PRIMARY KEY (taxID),
+    
+    FOREIGN KEY (personID) REFERENCES person(personID)
+		ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    FOREIGN KEY (airlineID, tail_num) REFERENCES airplane (airlineID, tail_num)
+		ON DELETE SET NULL
+        ON UPDATE CASCADE
+    
+);
+
+CREATE TABLE passenger (
+	personID VARCHAR(5) NOT NULL,
+    miles INT,
+    
+    FOREIGN KEY (personID) REFERENCES person(personID)
+		ON DELETE CASCADE
+        ON UPDATE CASCADE
 );
 
 CREATE TABLE ticket (
@@ -213,16 +240,16 @@ insert into pilot (personID, taxID, experience, airlineID, tail_num) values
 ('p15', '153-47-8101', 30, 'Delta', 'n110jn'),
 ('p16', '598-47-5172', 28, 'Spirit', 'n256ap'),
 ('p17', '865-71-6800', 36, 'Spirit', 'n256ap'),
-('p18', '250-86-2784', 23, '', ''),
-('p19', '386-39-7881', 2, '', ''),
+('p18', '250-86-2784', 23, NULL, NULL),
+('p19', '386-39-7881', 2, NULL, NULL),
 ('p2', '842-88-1257', 9, 'Delta', 'n106js'),
-('p20', '522-44-3098', 28, '', ''),
-('p21', '621-34-5755', 2, '', ''),
-('p22', '177-47-9877', 3, '', ''),
-('p23', '528-64-7912', 12, '', ''),
-('p24', '803-30-1789', 34, '', ''),
-('p25', '986-76-1587', 13, '', ''),
-('p26', '584-77-5105', 20, '', ''),
+('p20', '522-44-3098', 28, NULL, NULL),
+('p21', '621-34-5755', 2, NULL, NULL),
+('p22', '177-47-9877', 3, NULL, NULL),
+('p23', '528-64-7912', 12, NULL, NULL),
+('p24', '803-30-1789', 34, NULL, NULL),
+('p25', '986-76-1587', 13, NULL, NULL),
+('p26', '584-77-5105', 20, NULL, NULL),
 ('p3', '750-24-7616', 11, 'American', 'n330ss'),
 ('p4', '776-21-8098', 24, 'American', 'n330ss'),
 ('p5', '933-93-2165', 27, 'American', 'n330ss'),
@@ -259,35 +286,74 @@ insert into passenger (personID, miles) values
 ('p45', 663);
 
 insert into license (taxID, license) values
-('330-12-6907', ''),
-('769-60-1266', ''),
-('369-22-9505', ''),
-('680-92-5329', ''),
-('513-40-4168', ''),
-('454-71-7847', ''),
 ('153-47-8101', 'testing'),
-('598-47-5172', ''),
-('865-71-6800', ''),
-('250-86-2784', ''),
-('386-39-7881', ''),
-('842-88-1257', ''),
-('522-44-3098', ''),
-('621-34-5755', ''),
-('177-47-9877', ''),
-('528-64-7912', ''),
 ('803-30-1789', 'testing'),
-('986-76-1587', ''),
-('584-77-5105', ''),
-('750-24-7616', ''),
-('776-21-8098', ''),
-('933-93-2165', ''),
-('707-84-4555', ''),
-('450-25-5617', ''),
-('701-38-2179', ''),
 ('936-44-6941', 'testing');
 
-
-
+insert into airport (airportID, name, city, state, locID) values
+('ABQ', 'Albuquerque International Sunport', 'Albuquerque', 'NM', NULL),
+('ANC', 'Ted Stevens Anchorage International Airport', 'Anchorage', 'AK', NULL),
+('ATL', 'Hartsfield-Jackson Atlanta International Airport', 'Atlanta', 'GA', 'port_1'),
+('BDL', 'Bradley International Airport', 'Hartford', 'CT', NULL),
+('BFI', 'King County International Airport', 'Seattle', 'WA', 'port_10'),
+('BHM', 'Birmingham‚ÄìShuttlesworth International Airport', 'Birmingham', 'AL', NULL),
+('BNA', 'Nashville International Airport', 'Nashville', 'TN', NULL),
+('BOI', 'Boise Airport ', 'Boise', 'ID', NULL),
+('BOS', 'General Edward Lawrence Logan International Airport', 'Boston', 'MA', NULL),
+('BTV', 'Burlington International Airport', 'Burlington', 'VT', NULL),
+('BWI', 'Baltimore_Washington International Airport', 'Baltimore', 'MD', NULL),
+('BZN', 'Bozeman Yellowstone International Airport', 'Bozeman', 'MT', NULL),
+('CHS', 'Charleston International Airport', 'Charleston', 'SC', NULL),
+('CLE', 'Cleveland Hopkins International Airport', 'Cleveland', 'OH', NULL),
+('CLT', 'Charlotte Douglas International Airport', 'Charlotte', 'NC', NULL),
+('CRW', 'Yeager Airport', 'Charleston', 'WV', NULL),
+('DAL', 'Dallas Love Field', 'Dallas', 'TX', 'port_7'),
+('DCA', 'Ronald Reagan Washington National Airport', 'Washington', 'DC', 'port_9'),
+('DEN', 'Denver International Airport', 'Denver', 'CO', 'port_3'),
+('DFW', 'Dallas-Fort Worth International Airport', 'Dallas', 'TX', 'port_2'),
+('DSM', 'Des Moines International Airport', 'Des Moines', 'IA', NULL),
+('DTW', 'Detroit Metro Wayne County Airport', 'Detroit', 'MI', NULL),
+('EWR', 'Newark Liberty International Airport', 'Newark', 'NJ', NULL),
+('FAR', 'Hector International Airport', 'Fargo', 'ND', NULL),
+('FSD', 'Joe Foss Field', 'Sioux Falls', 'SD', NULL),
+('GSN', 'Saipan International Airport', 'Obyan Saipan Island', 'MP', NULL),
+('GUM', 'Antonio B_Won Pat International Airport', 'Agana Tamuning', 'GU', NULL),
+('HNL', 'Daniel K. Inouye International Airport', 'Honolulu Oahu', 'HI', NULL),
+('HOU', 'William P_Hobby Airport', 'Houston', 'TX', 'port_18'),
+('IAD', 'Washington Dulles International Airport', 'Washington', 'DC', 'port_11'),
+('IAH', 'George Bush Intercontinental Houston Airport', 'Houston', 'TX', 'port_13'),
+('ICT', 'Wichita Dwight D_Eisenhower National Airport ', 'Wichita', 'KS', NULL),
+('ILG', 'Wilmington Airport', 'Wilmington', 'DE', NULL),
+('IND', 'Indianapolis International Airport', 'Indianapolis', 'IN', NULL),
+('ISP', 'Long Island MacArthur Airport', 'New York Islip', 'NY', 'port_14'),
+('JAC', 'Jackson Hole Airport', 'Jackson', 'WY', NULL),
+('JAN', 'Jackson_Medgar Wiley Evers International Airport', 'Jackson', 'MS', NULL),
+('JFK', 'John F_Kennedy International Airport ', 'New York', 'NY', 'port_15'),
+('LAS', 'Harry Reid International Airport', 'Las Vegas', 'NV', NULL),
+('LAX', 'Los Angeles International Airport', 'Los Angeles', 'CA', 'port_5'),
+('LGA', 'LaGuardia Airport', 'New York', 'NY', NULL),
+('LIT', 'Bill and Hillary Clinton National Airport', 'Little Rock', 'AR', NULL),
+('MCO', 'Orlando International Airport', 'Orlando', 'FL', NULL),
+('MDW', 'Chicago Midway International Airport', 'Chicago', 'IL', NULL),
+('MHT', 'Manchester_Boston Regional Airport', 'Manchester', 'NH', NULL),
+('MKE', 'Milwaukee Mitchell International Airport', 'Milwaukee', 'WI', NULL),
+('MRI', 'Merrill Field', 'Anchorage', 'AK', NULL),
+('MSP', 'Minneapolis_St_Paul International Wold_Chamberlain Airport', 'Minneapolis Saint Paul', 'MN', NULL),
+('MSY', 'Louis Armstrong New Orleans International Airport', 'New Orleans', 'LA', NULL),
+('OKC', 'Will Rogers World Airport', 'Oklahoma City', 'OK', NULL),
+('OMA', 'Eppley Airfield', 'Omaha', 'NE', NULL),
+('ORD', 'O_Hare International Airport', 'Chicago', 'IL', 'port_4'),
+('PDX', 'Portland International Airport', 'Portland', 'OR', NULL),
+('PHL', 'Philadelphia International Airport', 'Philadelphia', 'PA', NULL),
+('PHX', 'Phoenix Sky Harbor International Airport', 'Phoenix', 'AZ', NULL),
+('PVD', 'Rhode Island T_F_Green International Airport', 'Providence', 'RI', NULL),
+('PWM', 'Portland International Jetport', 'Portland', 'ME', NULL),
+('SDF', 'Louisville International Airport', 'Louisville', 'KY', NULL),
+('SEA', 'Seattle‚ÄìTacoma International Airport', 'Seattle Tacoma', 'WA', 'port_17'),
+('SJU', 'Luis Munoz Marin International Airport', 'San Juan Carolina', 'PR', NULL),
+('SLC', 'Salt Lake City International Airport', 'Salt Lake City', 'UT', NULL),
+('STL', 'St_Louis Lambert International Airport', 'Saint Louis', 'MO', NULL),
+('STT', 'Cyril E_King Airport', 'Charlotte Amalie Saint Thomas', 'VI', NULL),
 
 
 
