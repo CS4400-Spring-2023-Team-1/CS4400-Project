@@ -373,16 +373,23 @@ CREATE TABLE ticket (
         ON UPDATE CASCADE
 );
 
-CREATE TABLE contains(
+CREATE TABLE route ( 
 	routeID VARCHAR(50) NOT NULL,
-    legID VARCHAR(10) NOT NULL,
-    sequence INT NOT NULL,
-    FOREIGN KEY (routeID) REFERENCES route(routeID)
-		ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (legID) REFERENCES leg(legID)
-		ON DELETE CASCADE
-        ON UPDATE CASCADE
+    start_loc CHAR(3) NOT NULL,
+    leg_1 VARCHAR(5) NOT NULL,
+    dis_1 int(5) not null,
+	stop_1 char(3) not null ,
+    
+   
+	leg_2 VARChAR(5) NOT NULL,
+    dis_2 int(5) ,
+	stop_2 char(3) ,
+
+
+	leg_3 VARChAR(5),
+    dis_3 int(5) ,
+    stop_3 char(3) 
+
 );
 
 CREATE TABLE seat (
