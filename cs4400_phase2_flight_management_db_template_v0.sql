@@ -17,9 +17,33 @@ use flight_management;
 
 
 CREATE TABLE location (
-	locID VARCHAR(15) NOT NULL UNIQUE,
-    PRIMARY KEY (locID)
+	locationID VARCHAR(15) NOT NULL UNIQUE,
+    PRIMARY KEY (locationID)
 );
+insert into location(locationID) values
+('plane_1'),
+('plane_11'),
+('plane_15'),
+('plane_2'),
+('plane_4'),
+('plane_7'),
+('plane_8'),
+('plane_9'),
+('port_1'),
+('port_10'),
+('port_11'),
+('port_13'),
+('port_14'),
+('port_15'),
+('port_17'),
+('port_18'),
+('port_2'),
+('port_3'),
+('port_4'),
+('port_5'),
+('port_7'),
+('port_9');
+
 
 CREATE TABLE airport (
 	airportID CHAR(3) NOT NULL UNIQUE,
@@ -59,18 +83,25 @@ CREATE TABLE airline (
     revenue INT NOT NULL,
     PRIMARY KEY (airlineID)
 );
+insert into airline(airlineID,revenue) values
+('Air_France',25),
+('American',45),
+('Delta',46),
+('JetBlue',8),
+('Lufthansa',31),
+('Southwest',22),
+('Spirit',4),
+('United',40);
 
 CREATE TABLE airplane (
 	airlineID VARCHAR(20) NOT NULL,
     tail_num CHAR(6) NOT NULL,
     seat_cap INT NOT NULL,
     speed INT NOT NULL,
-    flightID VARCHAR(10),
-    progress INT, -- What are we using this for?
-    status VARCHAR(15), -- What are we using this for?
-    next_time VARCHAR(15), -- What are we using this for?
-    airplane_type VARCHAR(4),
-    locID VARCHAR(15),
+    locationID varchar(10),
+    plane_type VARCHAR(10),
+    skids VARCHAR(15), 
+    props_or_jets int,
     
     PRIMARY KEY (airlineID, tail_num),
 
@@ -81,6 +112,25 @@ CREATE TABLE airplane (
     FOREIGN KEY (locID) REFERENCES location(locID) 
 		ON DELETE RESTRICT
 );
+ insert into airplane(airlineID,tail_num,seat_cap,speed,locationID,	plane_type,	skids, props_or_jets) values
+('American','n330ss',4,200,'plane_4','jet',NULL,2),
+('American','n380sd',5,400,null,'jet',NULL,2),
+('Delta','n106js',4,200,'plane_1','jet',NULL,2),
+('Delta','n110jn',5,600,'plane_2','jet',NULL,4),
+('Delta','n127js',4,800,null,null,NULL,null),
+('Delta','n156sq',8,100,null,null,NULL,null),
+('JetBlue','n161fk',4,200,null,'jet',NULL,2),
+('JetBlue','n337as',5,400,null,'jet',NULL,2),
+('Southwest','n118fm',4,100,'plane_11','prop',1,1),
+('Southwest','n401fj',4,200,'plane_9','jet',null,2),
+('Southwest','n653fk',6,400,null,'jet',null,2),
+('Southwest','n815pw',3,200,null,'prop',0,2),
+('Spirit','n256ap',4,400,'plane_15','jet',null,2),
+('United','n451fi',5,400,null,'jet',null,4),
+('United','n517ly',4,400,'plane_7','jet',null,2),
+('United','n616lt',7,400,null,'jet',null,4),
+('United','n620la',4,200,'plane_8','prop',0,2);
+
 
 CREATE TABLE prop (
 	airlineID VARCHAR(20) NOT NULL,
@@ -111,6 +161,54 @@ CREATE TABLE person (
     FOREIGN KEY (locID) REFERENCES location(locID)
 		ON DELETE RESTRICT
 );
+insert into person (personID, first_name, last_name, locID) values
+('p1', 'Jeanne', 'Nelson', 'plane_1'),
+('p10', 'Lawrence', 'Morgan', 'plane_9'),
+('p11', 'Sandra', 'Cruz', 'plane_9'),
+('p12', 'Dan', 'Ball', 'plane_11'),
+('p13', 'Bryant', 'Figueroa', 'plane_2'),
+('p14', 'Dana', 'Perry', 'plane_2'),
+('p15', 'Matt', 'Hunt', 'plane_2'),
+('p16', 'Edna', 'Brown', 'plane_15'),
+('p17', 'Ruby', 'Burgess', 'plane_15'),
+('p18', 'Esther', 'Pittman', 'port_2'),
+('p19', 'Doug', 'Fowler', 'port_4'),
+('p2', 'Roxanne', 'Byrd', 'plane_1'),
+('p20', 'Thomas', 'Olson', 'port_3'),
+('p21', 'Mona', 'Harrison', 'port_4'),
+('p22', 'Arlene', 'Massey', 'port_2'),
+('p23', 'Judith', 'Patrick', 'port_3'),
+('p24', 'Reginald', 'Rhodes', 'plane_1'),
+('p25', 'Vincent', 'Garcia', 'plane_1'),
+('p26', 'Cheryl', 'Moore', 'plane_4'),
+('p27', 'Michael', 'Rivera', 'plane_7'),
+('p28', 'Luther', 'Matthews', 'plane_8'),
+('p29', 'Moses', 'Parks', 'plane_8'),
+('p3', 'Tanya', 'Nguyen', 'plane_4'),
+('p30', 'Ora', 'Steele', 'plane_9'),
+('p31', 'Antonio', 'Flores', 'plane_9'),
+('p32', 'Glenn', 'Ross', 'plane_11'),
+('p33', 'Irma', 'Thomas', 'plane_11'),
+('p34', 'Ann', 'Maldonado', 'plane_2'),
+('p35', 'Jeffrey', 'Cruz', 'plane_2'),
+('p36', 'Sonya', 'Price', 'plane_15'),
+('p37', 'Tracy', 'Hale', 'plane_15'),
+('p38', 'Albert', 'Simmons', 'port_1'),
+('p39', 'Karen', 'Terry', 'port_9'),
+('p4', 'Kendra', 'Jacobs', 'plane_4'),
+('p40', 'Glen', 'Kelley', 'plane_4'),
+('p41', 'Brooke', 'Little', 'port_4'),
+('p42', 'Daryl', 'Nguyen', 'port_3'),
+('p43', 'Judy', 'Willis', 'port_1'),
+('p44', 'Marco', 'Klein', 'port_2'),
+('p45', 'Angelica', 'Hampton', 'port_5'),
+('p5', 'Jeff', 'Burton', 'plane_4'),
+('p6', 'Randal', 'Parks', 'plane_7'),
+('p7', 'Sonya', 'Owens', 'plane_7'),
+('p8', 'Bennie', 'Palmer', 'plane_8'),
+('p9', 'Marlene', 'Warner', 'plane_8');
+
+
 
 CREATE TABLE pilot (
 	personID VARCHAR(5) NOT NULL,
@@ -183,52 +281,7 @@ CREATE TABLE license (
         ON UPDATE CASCADE
 );
 
-insert into person (personID, first_name, last_name, locID) values
-('p1', 'Jeanne', 'Nelson', 'plane_1'),
-('p10', 'Lawrence', 'Morgan', 'plane_9'),
-('p11', 'Sandra', 'Cruz', 'plane_9'),
-('p12', 'Dan', 'Ball', 'plane_11'),
-('p13', 'Bryant', 'Figueroa', 'plane_2'),
-('p14', 'Dana', 'Perry', 'plane_2'),
-('p15', 'Matt', 'Hunt', 'plane_2'),
-('p16', 'Edna', 'Brown', 'plane_15'),
-('p17', 'Ruby', 'Burgess', 'plane_15'),
-('p18', 'Esther', 'Pittman', 'port_2'),
-('p19', 'Doug', 'Fowler', 'port_4'),
-('p2', 'Roxanne', 'Byrd', 'plane_1'),
-('p20', 'Thomas', 'Olson', 'port_3'),
-('p21', 'Mona', 'Harrison', 'port_4'),
-('p22', 'Arlene', 'Massey', 'port_2'),
-('p23', 'Judith', 'Patrick', 'port_3'),
-('p24', 'Reginald', 'Rhodes', 'plane_1'),
-('p25', 'Vincent', 'Garcia', 'plane_1'),
-('p26', 'Cheryl', 'Moore', 'plane_4'),
-('p27', 'Michael', 'Rivera', 'plane_7'),
-('p28', 'Luther', 'Matthews', 'plane_8'),
-('p29', 'Moses', 'Parks', 'plane_8'),
-('p3', 'Tanya', 'Nguyen', 'plane_4'),
-('p30', 'Ora', 'Steele', 'plane_9'),
-('p31', 'Antonio', 'Flores', 'plane_9'),
-('p32', 'Glenn', 'Ross', 'plane_11'),
-('p33', 'Irma', 'Thomas', 'plane_11'),
-('p34', 'Ann', 'Maldonado', 'plane_2'),
-('p35', 'Jeffrey', 'Cruz', 'plane_2'),
-('p36', 'Sonya', 'Price', 'plane_15'),
-('p37', 'Tracy', 'Hale', 'plane_15'),
-('p38', 'Albert', 'Simmons', 'port_1'),
-('p39', 'Karen', 'Terry', 'port_9'),
-('p4', 'Kendra', 'Jacobs', 'plane_4'),
-('p40', 'Glen', 'Kelley', 'plane_4'),
-('p41', 'Brooke', 'Little', 'port_4'),
-('p42', 'Daryl', 'Nguyen', 'port_3'),
-('p43', 'Judy', 'Willis', 'port_1'),
-('p44', 'Marco', 'Klein', 'port_2'),
-('p45', 'Angelica', 'Hampton', 'port_5'),
-('p5', 'Jeff', 'Burton', 'plane_4'),
-('p6', 'Randal', 'Parks', 'plane_7'),
-('p7', 'Sonya', 'Owens', 'plane_7'),
-('p8', 'Bennie', 'Palmer', 'plane_8'),
-('p9', 'Marlene', 'Warner', 'plane_8');
+
 
 insert into pilot (personID, taxID, experience, airlineID, tail_num) values
 ('p1', '330-12-6907', 31, 'Delta', 'n106js'),
@@ -353,7 +406,7 @@ insert into airport (airportID, name, city, state, locID) values
 ('SJU', 'Luis Munoz Marin International Airport', 'San Juan Carolina', 'PR', NULL),
 ('SLC', 'Salt Lake City International Airport', 'Salt Lake City', 'UT', NULL),
 ('STL', 'St_Louis Lambert International Airport', 'Saint Louis', 'MO', NULL),
-('STT', 'Cyril E_King Airport', 'Charlotte Amalie Saint Thomas', 'VI', NULL),
+('STT', 'Cyril E_King Airport', 'Charlotte Amalie Saint Thomas', 'VI', NULL);
 
 
 
