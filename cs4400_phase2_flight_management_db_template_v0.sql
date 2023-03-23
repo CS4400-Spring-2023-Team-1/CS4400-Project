@@ -277,10 +277,8 @@ CREATE TABLE airplane (
     locID varchar(10),
     plane_type VARCHAR(10),
     skids VARCHAR(15), 
-    props_or_jets int,
-    
+    props_or_jets INT,
     PRIMARY KEY (airlineID, tail_num),
-
     FOREIGN KEY (airlineID) REFERENCES airline(airlineID)
 		ON DELETE RESTRICT,
     FOREIGN KEY (flightID) REFERENCES flight(flightID) 
@@ -289,7 +287,7 @@ CREATE TABLE airplane (
 		ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
- insert into airplane(airlineID,tail_num,seat_cap,speed,locID,	plane_type,	skids, props_or_jets) values
+INSERT INTO airplane(airlineID, tail_num, seat_cap, speed,locID, plane_type, skids, props_or_jets) VALUES
 ('American','n330ss',4,200,'plane_4','jet',NULL,2),
 ('American','n380sd',5,400,null,'jet',NULL,2),
 ('Delta','n106js',4,200,'plane_1','jet',NULL,2),
@@ -308,7 +306,7 @@ CREATE TABLE airplane (
 ('United','n616lt',7,400,null,'jet',null,4),
 ('United','n620la',4,200,'plane_8','prop',0,2);
 
-
+DROP TABLE IF EXISTS prop;
 CREATE TABLE prop (
 	airlineID VARCHAR(20) NOT NULL,
     tail_num CHAR(6) NOT NULL,
@@ -318,8 +316,9 @@ CREATE TABLE prop (
     CONSTRAINT airplaneID FOREIGN KEY (airlineID, tail_num) REFERENCES airplane(airlineID, tail_num) 
 		ON DELETE CASCADE
         ON UPDATE CASCADE
-);
+) ENGINE=InnoDB;
 
+DROP TABLE IF EXISTS jet;
 CREATE TABLE jet (
 	airlineID VARCHAR(20) NOT NULL,
     tail_num CHAR(6) NOT NULL,
@@ -327,8 +326,9 @@ CREATE TABLE jet (
 	FOREIGN KEY (airlineID, tail_num) REFERENCES airplane(airlineID, tail_num) 
 		ON DELETE CASCADE
         ON UPDATE CASCADE
-);
+) ENGINE=InnoDB;
 
+DROP TABLE IF EXISTS person;
 CREATE TABLE person (
 	personID VARCHAR(5) NOT NULL UNIQUE,
     first_name VARCHAR(15) NOT NULL,
@@ -339,8 +339,8 @@ CREATE TABLE person (
     PRIMARY KEY (personID),
     FOREIGN KEY (locID) REFERENCES location(locID)
 		ON DELETE RESTRICT
-);
-insert into person (personID, first_name, last_name, locID, isPilot, isPassenger) values
+) ENGINE=InnoDB;
+INSERT INTO person (personID, first_name, last_name, locID, isPilot, isPassenger) VALUES
 ('p1', 'Jeanne', 'Nelson', 'plane_1', True, False),
 ('p10', 'Lawrence', 'Morgan', 'plane_9', True, False),
 ('p11', 'Sandra', 'Cruz', 'plane_9', True, False),
