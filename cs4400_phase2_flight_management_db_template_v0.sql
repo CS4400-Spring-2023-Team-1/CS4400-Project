@@ -15,12 +15,13 @@ use flight_management;
 
 -- Define the database structures and enter the denormalized data
 
-
+DROP TABLE IF EXISTS location;
 CREATE TABLE location (
-	locID VARCHAR(15) NOT NULL UNIQUE,
+	locID VARCHAR(15) NOT NULL,
     PRIMARY KEY (locID)
-);
-insert into location(locID) values
+) ENGINE=InnoDB;
+
+INSERT INTO location(locID) VALUES
 ('plane_1'),
 ('plane_11'),
 ('plane_15'),
@@ -44,19 +45,18 @@ insert into location(locID) values
 ('port_7'),
 ('port_9');
 
-
+DROP TABLE IF EXISTS airport;
 CREATE TABLE airport (
-	airportID CHAR(3) NOT NULL UNIQUE,
+	airportID CHAR(3) NOT NULL,
     airport_name VARCHAR(100) NOT NULL,
     city VARCHAR(40) NOT NULL,
     state CHAR(2) NOT NULL,
-    locID VARCHAR(15),
+    locID VARCHAR(15) DEFAULT NULL,
     PRIMARY KEY (airportID),
-    FOREIGN KEY (locID) REFERENCES location(locID) 
-		ON DELETE RESTRICT
-);
+    FOREIGN KEY (locID) REFERENCES location(locID)
+) ENGINE=InnoDB;
 
-insert into airport (airportID, airport_name, city, state, locID) values
+INSERT INTO airport (airportID, airport_name, city, state, locID) VALUES
 ('ABQ', 'Albuquerque International Sunport', 'Albuquerque', 'NM', NULL),
 ('ANC', 'Ted Stevens Anchorage International Airport', 'Anchorage', 'AK', NULL),
 ('ATL', 'Hartsfield-Jackson Atlanta International Airport', 'Atlanta', 'GA', 'port_1'),
@@ -121,45 +121,153 @@ insert into airport (airportID, airport_name, city, state, locID) values
 ('STL', 'St_Louis Lambert International Airport', 'Saint Louis', 'MO', NULL),
 ('STT', 'Cyril E_King Airport', 'Charlotte Amalie Saint Thomas', 'VI', NULL);
 
-
-
+DROP TABLE IF EXISTS leg;
 CREATE TABLE leg (
-	legID VARCHAR(10) NOT NULL UNIQUE,
+	legID VARCHAR(10) NOT NULL,
     distance decimal(5,0) NOT NULL,
-    airportID CHAR(3) NOT NULL,
+    departure CHAR(3) NOT NULL,
+    arrival CHAR(3) NOT NULL,
     PRIMARY KEY (legID),
-    FOREIGN KEY (airportID) REFERENCES airport(airportID) 
-		ON DELETE RESTRICT
-);
+    FOREIGN KEY (departure) REFERENCES airport(airportID),
+    FOREIGN KEY (arrival) REFERENCES airport(airportID) 
+) ENGINE=InnoDB;
 
+# route_legs
+INSERT INTO leg (legID, distance, departure, arrival) VALUES
+('leg_4', 600, 'ATL', 'ORD'),
+('leg_20', 600, 'ORD', 'DCA'),
+('leg_7', 600, 'DCA', 'ATL'),
+('leg_18', 1200, 'LAX', 'DFW'),
+('leg_10', 800, 'DFW', 'ORD'),
+('leg_22', 800, 'ORD', 'LAX'),
+('leg_24', 1800, 'SEA', 'ORD'),
+('leg_8', 200, 'DCA', 'JFK'),
+('leg_23', 2400, 'SEA', 'JFK'),
+('leg_9', 800, 'DFW', 'ATL'),
+('leg_1', 600, 'ATL', 'IAD'),
+('leg_25', 600, 'ORD', 'ATL'),
+('leg_26', 800, 'LAX', 'ORD'),
+('leg_12', 200, 'IAH', 'DAL'),
+('leg_6', 200, 'DAL', 'HOU'),
+('leg_3', 800, 'ATL', 'JFK'),
+('leg_19', 1000, 'LAX', 'SEA'),
+('leg_21', 800, 'ORD', 'DFW'),
+('leg_16', 800, 'JFK', 'ORD'),
+('leg_17', 2400, 'JFK', 'SEA'),
+('leg_27', 1600, 'ATL', 'LAX');
+
+# extra_legs
+INSERT INTO leg (legID, distance, departure, arrival) VALUES
+('leg_11', 600, 'IAD', 'ORD'),
+('leg_13', 1400, 'IAH', 'LAX'),
+('leg_14', 2400, 'ISP', 'BFI'),
+('leg_15', 800, 'JFK', 'ATL'),
+('leg_2', 600, 'ATL', 'IAH'),
+('leg_5', 1000, 'BFI', 'LAX');
+
+DROP TABLE IF EXISTS route;
 CREATE TABLE route (
-	routeID VARCHAR(50) NOT NULL UNIQUE,
+	routeID VARCHAR(50) NOT NULL,
     PRIMARY KEY (routeID)
-);
+) ENGINE=InnoDB;
 
+INSERT INTO route (routeID) VALUES
+('circle_east_coast'),
+('circle_west_coast'),
+('eastbound_north_milk_run'),
+('eastbound_north_nonstop'),
+('eastbound_south_milk_run'),
+('hub_xchg_southeast'),
+('hub_xchg_southwest'),
+('local_texas'),
+('northbound_east_coast'),
+('northbound_west_coast'),
+('southbound_midwest'),
+('westbound_north_milk_run'),
+('westbound_north_nonstop'),
+('westbound_south_nonstop');
+
+DROP TABLE IF EXISTS contains_table;
+CREATE TABLE contains_table (
+	routeID VARCHAR(50) NOT NULL,
+    legID VARCHAR(10) NOT NULL,
+    sequence decimal(1, 0) NOT NULL,
+    PRIMARY KEY (routeID, legID, sequence),
+    FOREIGN KEY (routeID) REFERENCES route(routeID),
+    FOREIGN KEY (legID) REFERENCES leg(legID)
+) ENGINE=InnoDB;
+
+INSERT INTO contains_table (routeID, legID, sequence) VALUES
+('circle_east_coast', 'leg_4', 1),
+('circle_east_coast', 'leg_20', 2),
+('circle_east_coast', 'leg_7', 3),
+('circle_west_coast', 'leg_18', 1),
+('circle_west_coast', 'leg_10', 2),
+('circle_west_coast', 'leg_22', 3),
+('eastbound_north_milk_run', 'leg_24', 1),
+('eastbound_north_milk_run', 'leg_20', 2),
+('eastbound_north_milk_run', 'leg_8', 3),
+('eastbound_north_nonstop', 'leg_23', 1),
+('eastbound_south_milk_run', 'leg_18', 1),
+('eastbound_south_milk_run', 'leg_9', 2),
+('eastbound_south_milk_run', 'leg_1', 3),
+('hub_xchg_southeast', 'leg_25', 1),
+('hub_xchg_southeast', 'leg_4', 2),
+('hub_xchg_southwest', 'leg_22', 1),
+('hub_xchg_southwest', 'leg_26', 2),
+('local_texas', 'leg_12', 1),
+('local_texas', 'leg_6', 2),
+('northbound_east_coast', 'leg_3', 1),
+('northbound_west_coast', 'leg_19', 1),
+('southbound_midwest', 'leg_21', 1),
+('westbound_north_milk_run', 'leg_16', 1),
+('westbound_north_milk_run', 'leg_22', 2),
+('westbound_north_milk_run', 'leg_19', 3),
+('westbound_north_nonstop', 'leg_17', 1),
+('westbound_south_nonstop', 'leg_27', 1);
+
+DROP TABLE IF EXISTS flight;
 CREATE TABLE flight (
-	flightID VARCHAR(10) NOT NULL UNIQUE,
+	flightID VARCHAR(10) NOT NULL,
     routeID VARCHAR(50) NOT NULL,
     PRIMARY KEY (flightID),
     FOREIGN KEY (routeID) REFERENCES route(routeID) 
-		ON DELETE RESTRICT
-);
+) ENGINE=InnoDB;
 
+INSERT INTO flight (flightID, routeID) VALUES
+('AM_1523', 'circle_west_coast'),
+('DL_1174', 'northbound_east_coast'),
+('DL_1243', 'westbound_north_nonstop'),
+('DL_3410', 'circle_east_coast'),
+('SP_1880', 'circle_east_coast'),
+('SW_1776', 'hub_xchg_southwest'),
+('SW_610', 'local_texas'),
+('UN_1899', 'eastbound_north_milk_run'),
+('UN_523', 'hub_xchg_southeast'),
+('UN_717', 'circle_west_coast');
+
+DROP TABLE IF EXISTS airline;
 CREATE TABLE airline (
-	airlineID VARCHAR(20) NOT NULL UNIQUE,
+	airlineID VARCHAR(20) NOT NULL,
     revenue INT NOT NULL,
     PRIMARY KEY (airlineID)
-);
-insert into airline(airlineID,revenue) values
-('Air_France',25),
-('American',45),
-('Delta',46),
-('JetBlue',8),
-('Lufthansa',31),
-('Southwest',22),
-('Spirit',4),
-('United',40);
+) ENGINE=InnoDB;
 
+INSERT INTO airline(airlineID, revenue) VALUES
+('Air_France', 25),
+('American', 45),
+('Delta', 46),
+('JetBlue', 8),
+('Lufthansa', 31),
+('Southwest', 22),
+('Spirit', 4),
+('United', 40);
+
+--
+-- COMPLETE
+--
+
+DROP TABLE IF EXISTS airplane;
 CREATE TABLE airplane (
 	airlineID VARCHAR(20) NOT NULL,
     tail_num CHAR(6) NOT NULL,
@@ -179,7 +287,8 @@ CREATE TABLE airplane (
 		ON DELETE SET NULL,
     FOREIGN KEY (locID) REFERENCES location(locID) 
 		ON DELETE RESTRICT
-);
+) ENGINE=InnoDB;
+
  insert into airplane(airlineID,tail_num,seat_cap,speed,locID,	plane_type,	skids, props_or_jets) values
 ('American','n330ss',4,200,'plane_4','jet',NULL,2),
 ('American','n380sd',5,400,null,'jet',NULL,2),
@@ -359,48 +468,70 @@ insert into passenger (personID, miles) values
 ('p44', 572),
 ('p45', 663);
 
+--
+-- CONTINUE
+--
+
+DROP TABLE IF EXISTS ticket;
 CREATE TABLE ticket (
-	ticketID VARCHAR(15) NOT NULL UNIQUE,
-    cost INT NOT NULL,
+	ticketID VARCHAR(15) NOT NULL,
+    cost decimal(4, 0) NOT NULL,
     flightID VARCHAR(10) NOT NULL,
     airportID CHAR(3) NOT NULL,
     personID VARCHAR(5) NOT NULL, 
     PRIMARY KEY (ticketID),
-    FOREIGN KEY (flightID) REFERENCES flight(flightID) 
-        ON UPDATE CASCADE,
-    FOREIGN KEY (airportID) REFERENCES airport(airportID) 
-        ON UPDATE CASCADE,
+    FOREIGN KEY (flightID) REFERENCES flight(flightID),
+    FOREIGN KEY (airportID) REFERENCES airport(airportID),
     FOREIGN KEY (personID) REFERENCES person(personID)
-        ON UPDATE CASCADE
-);
+) ENGINE=InnoDB;
 
-CREATE TABLE route ( 
-	routeID VARCHAR(50) NOT NULL,
-    start_loc CHAR(3) NOT NULL,
-    leg_1 VARCHAR(5) NOT NULL,
-    dis_1 int(5) not null,
-	stop_1 char(3) not null ,
-    
-   
-	leg_2 VARChAR(5) NOT NULL,
-    dis_2 int(5) ,
-	stop_2 char(3) ,
+INSERT INTO ticket (ticketID, cost, flightID, airportID, personID) VALUES
+('tkt_am_17', 375, 'AM_1523', 'ORD', 'p40'),
+('tkt_am_18', 275, 'AM_1523', 'LAX', 'p41'),
+('tkt_am_3', 250, 'AM_1523', 'LAX', 'p26'),
+('tkt_dl_1', 450, 'DL_1174', 'JFK', 'p24'),
+('tkt_dl_11', 500, 'DL_1243', 'LAX', 'p34'),
+('tkt_dl_12', 250, 'DL_1243', 'LAX', 'p35'),
+('tkt_dl_2', 225, 'DL_1174', 'JFK', 'p25'),
+('tkt_sp_13', 225, 'SP_1880', 'ATL', 'p36'),
+('tkt_sp_14', 150, 'SP_1880', 'DCA', 'p37'),
+('tkt_sp_16', 475, 'SP_1880', 'ATL', 'p39'),
+('tkt_sw_10', 425, 'SW_610', 'HOU', 'p33'),
+('tkt_sw_7', 400, 'SW_1776', 'ORD', 'p30'),
+('tkt_sw_8', 175, 'SW_1776', 'ORD', 'p31'),
+('tkt_sw_9', 125, 'SW_610', 'HOU', 'p32'),
+('tkt_un_15', 150, 'UN_523', 'ORD', 'p38'),
+('tkt_un_4', 175, 'UN_1899', 'DCA', 'p27'),
+('tkt_un_5', 225, 'UN_523', 'ATL', 'p28'),
+('tkt_un_6', 100, 'UN_523', 'ORD', 'p29');
 
-
-	leg_3 VARChAR(5),
-    dis_3 int(5) ,
-    stop_3 char(3) 
-
-);
-
+DROP TABLE IF EXISTS seat;
 CREATE TABLE seat (
-	seat_num INT NOT NULL UNIQUE,
+	seat_num CHAR(2) NOT NULL,
     ticketID VARCHAR(15) NOT NULL,
-    PRIMARY KEY (seat_num),
+    PRIMARY KEY (seat_num, ticketID),
     FOREIGN KEY (ticketID) REFERENCES ticket(ticketID) 
-		ON DELETE CASCADE
-        ON UPDATE CASCADE
-);
+) ENGINE=InnoDB;
+
+INSERT INTO seat (seat_num, ticketID) VALUES
+('2B', 'tkt_am_17'),
+('2A', 'tkt_am_18'),
+('3B', 'tkt_am_3'),
+('1C', 'tkt_dl_1'),
+('2F', 'tkt_dl_1'),
+('1B', 'tkt_dl_11'),
+('1E', 'tkt_dl_11'),
+('2F', 'tkt_dl_11'),
+('2A', 'tkt_dl_12'),
+('2D', 'tkt_dl_2'),
+('1A', 'tkt_sp_13'),
+('1D', 'tkt_sw_10'),
+('3C', 'tkt_sw_7'),
+('3E', 'tkt_sw_8'),
+('1C', 'tkt_sw_9'),
+('2B', 'tkt_un_4'),
+('1A', 'tkt_un_5'),
+('3B', 'tkt_un_6');
 
 CREATE TABLE license (
     taxID CHAR(11) NOT NULL,
