@@ -279,6 +279,9 @@ CREATE TABLE airplane (
     skids VARCHAR(15), 
     props INT,
     jets INT,
+    progress INT DEFAULT NULL,
+    airplane_status VARCHAR(15) DEFAULT NULL,
+    next_time TIME DEFAULT NULL,
     PRIMARY KEY (airlineID, tail_num),
     FOREIGN KEY (airlineID) REFERENCES airline(airlineID)
 		ON DELETE RESTRICT,
@@ -288,24 +291,24 @@ CREATE TABLE airplane (
 		ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
-INSERT INTO airplane (airlineID, tail_num, seat_cap, speed,locID, plane_type, skids, props, jets) VALUES
-('American','n330ss',4,200,'plane_4','jet',NULL,NULL,2),
-('American','n380sd',5,400,null,'jet',NULL,NULL,2),
-('Delta','n106js',4,200,'plane_1','jet',NULL,NULL,2),
-('Delta','n110jn',5,600,'plane_2','jet',NULL,NULL,4),
-('Delta','n127js',4,800,null,null,NULL,NULL,NULL),
-('Delta','n156sq',8,100,null,null,NULL,null,NULL),
-('JetBlue','n161fk',4,200,null,'jet',NULL,NULL,2),
-('JetBlue','n337as',5,400,null,'jet',NULL,NULL,2),
-('Southwest','n118fm',4,100,'plane_11','prop',1,1,NULL),
-('Southwest','n401fj',4,200,'plane_9','jet',null,NULL,2),
-('Southwest','n653fk',6,400,null,'jet',null,NULL,2),
-('Southwest','n815pw',3,200,null,'prop',0,2,NULL),
-('Spirit','n256ap',4,400,'plane_15','jet',null,NULL,2),
-('United','n451fi',5,400,null,'jet',null,NULL,4),
-('United','n517ly',4,400,'plane_7','jet',null,NULL,2),
-('United','n616lt',7,400,null,'jet',null,NULL,4),
-('United','n620la',4,200,'plane_8','prop',0,2,NULL);
+INSERT INTO airplane (airlineID, tail_num, seat_cap, speed, flightID, locID, plane_type, skids, props, jets, progress, airplane_status, next_time) VALUES
+('American', 'n330ss', 4, 200, 'AM_1523', 'plane_4', 'jet', NULL, NULL, 2, 2, 'on_ground', '14:30:00'),
+('American', 'n380sd', 5, 400, NULL, NULL, 'jet', NULL, NULL, 2, NULL, NULL, NULL),
+('Delta', 'n106js', 4, 200, 'DL_1174', 'plane_1', 'jet', NULL, NULL, 2, 0, 'on_ground', '08:00:00'),
+('Delta', 'n110jn', 5, 600, 'DL_1243', 'plane_2', 'jet', NULL, NULL, 4, 0, 'on_ground', '09:30:00'),
+('Delta', 'n127js', 4, 800, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+('Delta', 'n156sq', 8, 100, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+('JetBlue', 'n161fk', 4, 200, NULL, NULL, 'jet', NULL, NULL, 2, NULL, NULL, NULL),
+('JetBlue', 'n337as', 5, 400, NULL, NULL, 'jet', NULL, NULL, 2, NULL, NULL, NULL),
+('Southwest', 'n118fm', 4, 100, 'SW_610', 'plane_11', 'prop', 1, 1, NULL, 2, 'in_flight', '11:30:00'),
+('Southwest', 'n401fj', 4, 200, 'SW_1776', 'plane_9', 'jet', NULL, NULL, 2, 2, 'in_flight','14:00:00'),
+('Southwest', 'n653fk', 6, 400, NULL, NULL, 'jet', NULL, NULL, 2, NULL, NULL, NULL),
+('Southwest', 'n815pw', 3, 200, NULL, NULL, 'prop', 0, 2, NULL, NULL, NULL, NULL),
+('Spirit', 'n256ap', 4, 400, 'SP_1880', 'plane_15', 'jet', NULL, NULL, 2, 2, 'in_flight', '15:00:00'),
+('United', 'n451fi', 5, 400, NULL, NULL, 'jet', NULL, NULL, 4, NULL, NULL, NULL),
+('United', 'n517ly', 4, 400, 'UN_1899', 'plane_7', 'jet', NULL, NULL, 2, 0, 'on_ground', '09:30:00'),
+('United', 'n616lt', 7, 400, NULL, NULL, 'jet', NULL, NULL, 4, NULL, NULL, NULL),
+('United', 'n620la', 4, 200, 'UN_523', 'plane_8', 'prop', 0, 2, NULL, 1, 'in_flight', '11:00:00');
 
 DROP TABLE IF EXISTS person;
 CREATE TABLE person (
