@@ -316,8 +316,7 @@ CREATE TABLE prop (
     skids INT,
     
     CONSTRAINT airplaneID FOREIGN KEY (airlineID, tail_num) REFERENCES airplane(airlineID, tail_num) 
-		ON DELETE CASCADE
-        ON UPDATE CASCADE
+		
 );
 
 CREATE TABLE jet (
@@ -325,8 +324,7 @@ CREATE TABLE jet (
     tail_num CHAR(6) NOT NULL,
     engines INT,
 	FOREIGN KEY (airlineID, tail_num) REFERENCES airplane(airlineID, tail_num) 
-		ON DELETE CASCADE
-        ON UPDATE CASCADE
+		
 );
 
 CREATE TABLE person (
@@ -338,7 +336,6 @@ CREATE TABLE person (
     isPassenger BOOLEAN,
     PRIMARY KEY (personID),
     FOREIGN KEY (locID) REFERENCES location(locID)
-		ON DELETE RESTRICT
 );
 insert into person (personID, first_name, last_name, locID, isPilot, isPassenger) values
 ('p1', 'Jeanne', 'Nelson', 'plane_1', True, False),
@@ -400,8 +397,7 @@ CREATE TABLE pilot (
 		ON DELETE CASCADE
         ON UPDATE CASCADE,
     FOREIGN KEY (airlineID, tail_num) REFERENCES airplane (airlineID, tail_num)
-		ON DELETE SET NULL
-        ON UPDATE CASCADE
+		
     
 );
 insert into pilot (personID, taxID, experience, airlineID, tail_num) values
@@ -437,8 +433,7 @@ CREATE TABLE passenger (
     miles INT,
     
     FOREIGN KEY (personID) REFERENCES person(personID)
-		ON DELETE CASCADE
-        ON UPDATE CASCADE
+		
 );
 
 insert into passenger (personID, miles) values
@@ -537,8 +532,7 @@ CREATE TABLE license (
     taxID CHAR(11) NOT NULL,
     license VARCHAR(10) NOT NULL,
     FOREIGN KEY (taxID) REFERENCES pilot(taxID) 
-		ON DELETE CASCADE
-        ON UPDATE CASCADE
+		
 );
 insert into license (taxID, license) values
 ('153-47-8101', 'testing'),
