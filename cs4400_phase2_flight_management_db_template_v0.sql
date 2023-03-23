@@ -306,28 +306,6 @@ INSERT INTO airplane(airlineID, tail_num, seat_cap, speed,locID, plane_type, ski
 ('United','n616lt',7,400,null,'jet',null,4),
 ('United','n620la',4,200,'plane_8','prop',0,2);
 
-DROP TABLE IF EXISTS prop;
-CREATE TABLE prop (
-	airlineID VARCHAR(20) NOT NULL,
-    tail_num CHAR(6) NOT NULL,
-    props INT,
-    skids INT,
-    
-    CONSTRAINT airplaneID FOREIGN KEY (airlineID, tail_num) REFERENCES airplane(airlineID, tail_num) 
-		ON DELETE CASCADE
-        ON UPDATE CASCADE
-) ENGINE=InnoDB;
-
-DROP TABLE IF EXISTS jet;
-CREATE TABLE jet (
-	airlineID VARCHAR(20) NOT NULL,
-    tail_num CHAR(6) NOT NULL,
-    engines INT,
-	FOREIGN KEY (airlineID, tail_num) REFERENCES airplane(airlineID, tail_num) 
-		ON DELETE CASCADE
-        ON UPDATE CASCADE
-) ENGINE=InnoDB;
-
 DROP TABLE IF EXISTS person;
 CREATE TABLE person (
 	personID VARCHAR(5) NOT NULL UNIQUE,
@@ -340,7 +318,7 @@ CREATE TABLE person (
     FOREIGN KEY (locID) REFERENCES location(locID)
 		ON DELETE RESTRICT
 ) ENGINE=InnoDB;
-INSERT INTO person (personID, first_name, last_name, locID, isPilot, isPassenger) VALUES
+insert into person (personID, first_name, last_name, locID, isPilot, isPassenger) values
 ('p1', 'Jeanne', 'Nelson', 'plane_1', True, False),
 ('p10', 'Lawrence', 'Morgan', 'plane_9', True, False),
 ('p11', 'Sandra', 'Cruz', 'plane_9', True, False),
@@ -400,8 +378,7 @@ CREATE TABLE pilot (
 		ON DELETE CASCADE
         ON UPDATE CASCADE,
     FOREIGN KEY (airlineID, tail_num) REFERENCES airplane (airlineID, tail_num)
-		ON DELETE SET NULL
-        ON UPDATE CASCADE
+		
     
 );
 insert into pilot (personID, taxID, experience, airlineID, tail_num) values
@@ -437,8 +414,7 @@ CREATE TABLE passenger (
     miles INT,
     
     FOREIGN KEY (personID) REFERENCES person(personID)
-		ON DELETE CASCADE
-        ON UPDATE CASCADE
+		
 );
 
 insert into passenger (personID, miles) values
@@ -537,16 +513,48 @@ CREATE TABLE license (
     taxID CHAR(11) NOT NULL,
     license VARCHAR(10) NOT NULL,
     FOREIGN KEY (taxID) REFERENCES pilot(taxID) 
-		ON DELETE CASCADE
-        ON UPDATE CASCADE
+		
 );
 insert into license (taxID, license) values
 ('153-47-8101', 'testing'),
 ('803-30-1789', 'testing'),
-('936-44-6941', 'testing');
-
-
-
+('936-44-6941', 'testing'),
+('330-12-6907', 'jet'),
+('769-60-1266', 'jet'),
+('369-22-9505', 'jet'),
+('369-22-9505', 'jet'),
+('513-40-4168', 'jet'),
+('513-40-4168', 'jet'),
+('153-47-8101', 'jet'),
+('153-47-8101', 'jet'),
+('865-71-6800', 'jet'),
+('865-71-6800', 'jet'),
+('386-39-7881', 'jet'),
+('386-39-7881', 'jet'),
+('522-44-3098', 'jet'),
+('522-44-3098', 'jet'),
+('177-47-9877', 'jet'),
+('177-47-9877', 'jet'),
+('803-30-1789', 'jet'),
+('803-30-1789', 'jet'),
+('584-77-5105', 'jet'),
+('584-77-5105', 'jet'),
+('750-24-7616', 'jet'),
+('750-24-7616', 'jet'),
+('933-93-2165', 'jet'),
+('933-93-2165', 'jet'),
+('450-25-5617', 'jet'),
+('450-25-5617', 'jet'),
+('936-44-6941', 'jet'),
+('369-22-9505', 'prop'),
+('153-47-8101', 'prop'),
+('865-71-6800', 'prop'),
+('842-88-1257', 'prop'),
+('621-34-5755', 'prop'),
+('803-30-1789', 'prop'),
+('776-21-8098', 'prop'),
+('707-84-4555', 'prop'),
+('936-44-6941', 'prop');
 
 
 
