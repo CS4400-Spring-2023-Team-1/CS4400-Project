@@ -277,7 +277,8 @@ CREATE TABLE airplane (
     locID varchar(10),
     plane_type VARCHAR(10),
     skids VARCHAR(15), 
-    props_or_jets INT,
+    props INT,
+    jets INT,
     PRIMARY KEY (airlineID, tail_num),
     FOREIGN KEY (airlineID) REFERENCES airline(airlineID)
 		ON DELETE RESTRICT,
@@ -287,24 +288,24 @@ CREATE TABLE airplane (
 		ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
-INSERT INTO airplane (airlineID, tail_num, seat_cap, speed,locID, plane_type, skids, props_or_jets) VALUES
-('American','n330ss',4,200,'plane_4','jet',NULL,2),
-('American','n380sd',5,400,null,'jet',NULL,2),
-('Delta','n106js',4,200,'plane_1','jet',NULL,2),
-('Delta','n110jn',5,600,'plane_2','jet',NULL,4),
-('Delta','n127js',4,800,null,null,NULL,null),
-('Delta','n156sq',8,100,null,null,NULL,null),
-('JetBlue','n161fk',4,200,null,'jet',NULL,2),
-('JetBlue','n337as',5,400,null,'jet',NULL,2),
-('Southwest','n118fm',4,100,'plane_11','prop',1,1),
-('Southwest','n401fj',4,200,'plane_9','jet',null,2),
-('Southwest','n653fk',6,400,null,'jet',null,2),
-('Southwest','n815pw',3,200,null,'prop',0,2),
-('Spirit','n256ap',4,400,'plane_15','jet',null,2),
-('United','n451fi',5,400,null,'jet',null,4),
-('United','n517ly',4,400,'plane_7','jet',null,2),
-('United','n616lt',7,400,null,'jet',null,4),
-('United','n620la',4,200,'plane_8','prop',0,2);
+INSERT INTO airplane (airlineID, tail_num, seat_cap, speed,locID, plane_type, skids, props, jets) VALUES
+('American','n330ss',4,200,'plane_4','jet',NULL,NULL,2),
+('American','n380sd',5,400,null,'jet',NULL,NULL,2),
+('Delta','n106js',4,200,'plane_1','jet',NULL,NULL,2),
+('Delta','n110jn',5,600,'plane_2','jet',NULL,NULL,4),
+('Delta','n127js',4,800,null,null,NULL,NULL,NULL),
+('Delta','n156sq',8,100,null,null,NULL,null,NULL),
+('JetBlue','n161fk',4,200,null,'jet',NULL,NULL,2),
+('JetBlue','n337as',5,400,null,'jet',NULL,NULL,2),
+('Southwest','n118fm',4,100,'plane_11','prop',1,1,NULL),
+('Southwest','n401fj',4,200,'plane_9','jet',null,NULL,2),
+('Southwest','n653fk',6,400,null,'jet',null,NULL,2),
+('Southwest','n815pw',3,200,null,'prop',0,2,NULL),
+('Spirit','n256ap',4,400,'plane_15','jet',null,NULL,2),
+('United','n451fi',5,400,null,'jet',null,NULL,4),
+('United','n517ly',4,400,'plane_7','jet',null,NULL,2),
+('United','n616lt',7,400,null,'jet',null,NULL,4),
+('United','n620la',4,200,'plane_8','prop',0,2,NULL);
 
 DROP TABLE IF EXISTS person;
 CREATE TABLE person (
@@ -517,7 +518,7 @@ CREATE TABLE license (
     FOREIGN KEY (taxID) REFERENCES pilot(taxID) 
 ) ENGINE=InnoDB;
 
-insert into license (taxID, license) values
+INSERT INTO license (taxID, license) VALUES
 ('153-47-8101', 'testing'),
 ('803-30-1789', 'testing'),
 ('936-44-6941', 'testing'),
