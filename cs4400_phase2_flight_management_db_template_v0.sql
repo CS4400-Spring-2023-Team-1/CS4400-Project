@@ -287,7 +287,7 @@ CREATE TABLE airplane (
 		ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
-INSERT INTO airplane(airlineID, tail_num, seat_cap, speed,locID, plane_type, skids, props_or_jets) VALUES
+INSERT INTO airplane (airlineID, tail_num, seat_cap, speed,locID, plane_type, skids, props_or_jets) VALUES
 ('American','n330ss',4,200,'plane_4','jet',NULL,2),
 ('American','n380sd',5,400,null,'jet',NULL,2),
 ('Delta','n106js',4,200,'plane_1','jet',NULL,2),
@@ -318,7 +318,8 @@ CREATE TABLE person (
     FOREIGN KEY (locID) REFERENCES location(locID)
 		ON DELETE RESTRICT
 ) ENGINE=InnoDB;
-insert into person (personID, first_name, last_name, locID, isPilot, isPassenger) values
+
+INSERT INTO person (personID, first_name, last_name, locID, isPilot, isPassenger) VALUES
 ('p1', 'Jeanne', 'Nelson', 'plane_1', True, False),
 ('p10', 'Lawrence', 'Morgan', 'plane_9', True, False),
 ('p11', 'Sandra', 'Cruz', 'plane_9', True, False),
@@ -365,6 +366,7 @@ insert into person (personID, first_name, last_name, locID, isPilot, isPassenger
 ('p8', 'Bennie', 'Palmer', 'plane_8', True, False),
 ('p9', 'Marlene', 'Warner', 'plane_8', True, False);
 
+DROP TABLE IF EXISTS pilot;
 CREATE TABLE pilot (
 	personID VARCHAR(5) NOT NULL,
 	taxID CHAR(11) NOT NULL,
@@ -378,10 +380,10 @@ CREATE TABLE pilot (
 		ON DELETE CASCADE
         ON UPDATE CASCADE,
     FOREIGN KEY (airlineID, tail_num) REFERENCES airplane (airlineID, tail_num)
-		
-    
-);
-insert into pilot (personID, taxID, experience, airlineID, tail_num) values
+	
+) Engine=InnoDB;
+
+INSERT INTO pilot (personID, taxID, experience, airlineID, tail_num) VALUES
 ('p1', '330-12-6907', 31, 'Delta', 'n106js'),
 ('p10', '769-60-1266', 15, 'Southwest', 'n401fj'),
 ('p11', '369-22-9505', 22, 'Southwest', 'n401fj'),
@@ -409,15 +411,14 @@ insert into pilot (personID, taxID, experience, airlineID, tail_num) values
 ('p8', '701-38-2179', 12, 'United', 'n620la'),
 ('p9', '936-44-6941', 13, 'United', 'n620la');
 
+DROP TABLE IF EXISTS passenger;
 CREATE TABLE passenger (
 	personID VARCHAR(5) NOT NULL,
     miles INT,
-    
     FOREIGN KEY (personID) REFERENCES person(personID)
-		
-);
+) ENGINE=InnoDB;
 
-insert into passenger (personID, miles) values
+INSERT INTO passenger (personID, miles) VALUES
 ('p21', 771),
 ('p22', 374),
 ('p23', 414),
@@ -509,12 +510,13 @@ INSERT INTO seat (seat_num, ticketID) VALUES
 ('1A', 'tkt_un_5'),
 ('3B', 'tkt_un_6');
 
+DROP TABLE IF EXISTS license;
 CREATE TABLE license (
     taxID CHAR(11) NOT NULL,
     license VARCHAR(10) NOT NULL,
     FOREIGN KEY (taxID) REFERENCES pilot(taxID) 
-		
-);
+) ENGINE=InnoDB;
+
 insert into license (taxID, license) values
 ('153-47-8101', 'testing'),
 ('803-30-1789', 'testing'),
