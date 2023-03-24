@@ -269,7 +269,7 @@ INSERT INTO airline(airlineID, revenue) VALUES
 
 DROP TABLE IF EXISTS airplane;
 CREATE TABLE airplane (
-	airlineID VARCHAR(20) UNIQUE NOT NULL,
+	airlineID VARCHAR(20) NOT NULL,
     tail_num CHAR(6) NOT NULL,
     seat_cap INT NOT NULL,
     speed INT NOT NULL,
