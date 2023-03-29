@@ -17,7 +17,7 @@ use flight_management;
 
 DROP TABLE IF EXISTS location;
 CREATE TABLE location (
-	locID VARCHAR(15) NOT NULL,
+	locID VARCHAR(15) UNIQUE NOT NULL,
     PRIMARY KEY (locID)
 ) ENGINE=InnoDB;
 
@@ -47,8 +47,8 @@ INSERT INTO location(locID) VALUES
 
 DROP TABLE IF EXISTS airport;
 CREATE TABLE airport (
-	airportID CHAR(3) NOT NULL,
-    airport_name VARCHAR(100) NOT NULL,
+	airportID CHAR(3) UNIQUE NOT NULL,
+    airport_name VARCHAR(100) UNIQUE NOT NULL,
     city VARCHAR(40) NOT NULL,
     state CHAR(2) NOT NULL,
     locID VARCHAR(15) DEFAULT NULL,
@@ -283,12 +283,9 @@ CREATE TABLE airplane (
     airplane_status VARCHAR(15) DEFAULT NULL,
     next_time TIME DEFAULT NULL,
     PRIMARY KEY (airlineID, tail_num),
-    FOREIGN KEY (airlineID) REFERENCES airline(airlineID)
-		ON DELETE RESTRICT,
-    FOREIGN KEY (flightID) REFERENCES flight(flightID) 
-		ON DELETE SET NULL,
+    FOREIGN KEY (airlineID) REFERENCES airline(airlineID),
+    FOREIGN KEY (flightID) REFERENCES flight(flightID), 
     FOREIGN KEY (locID) REFERENCES location(locID) 
-		ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
 INSERT INTO airplane (airlineID, tail_num, seat_cap, speed, flightID, locID, plane_type, skids, props, jets, progress, airplane_status, next_time) VALUES
