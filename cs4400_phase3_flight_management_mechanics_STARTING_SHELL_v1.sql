@@ -34,47 +34,43 @@ create procedure add_airplane (in ip_airlineID varchar(50), in ip_tail_num varch
     in ip_plane_type varchar(100), in ip_skids boolean, in ip_propellers integer,
     in ip_jet_engines integer)
 sp_main: begin
-
-	DECLARE valid BOOLEAN DEFAULT TRUE;
     
 	-- Airplane must be sponsored by an existing airline
 	IF (SELECT COUNT(*) FROM airline WHERE airlineID = ip_airlineID) < 1 THEN
-		SET valid = FALSE;
+		LEAVE sp_main;
 	END IF;
 
 	-- Unique tail number
 	IF (SELECT COUNT(*) FROM airplane WHERE tail_num = ip_tail_num) > 0 THEN
-		SET valid = FALSE;
+		LEAVE sp_main;
 	END IF;
     
 	-- Nonzero seat capacity and speed
 	IF ip_seat_capacity <= 0 OR ip_speed <= 0 THEN
-		SET valid = FALSE;
+		LEAVE sp_main;
     END IF;
 
 	-- For certain types, some parameters must be given
 	IF ip_plane_type = 'jet' OR ip_propellers != NULL OR ip_skids != NULL THEN
-		IF ip_engines = NULL THEN
-			SET valid = FALSE;
+		IF ip_jet_engines = NULL THEN
+			LEAVE sp_main;
         END IF;
     ELSEIF ip_plane_type = 'prop' THEN
-		IF ip_skids = NULL OR ip_propellers = NULL OR ip_engines != NULL THEN
-			SET valid = FALSE;
+		IF ip_skids = NULL OR ip_propellers = NULL OR ip_jet_engines != NULL THEN
+			LEAVE sp_main;
         END IF;
         
 	END IF;
 
 	-- Must have a unique location if it will carry passengers
-	IF (SELECT COUNT(*) FROM location WHERE locID = locationID) > 0 THEN
-		SET valid = FALSE;
+	IF (SELECT COUNT(*) FROM location WHERE location.locationID = ip_locationID) > 0 THEN
+		LEAVE sp_main;
     END IF;
     
 	-- Must be valid to insert the airplane (thus atomic operation)
-	IF valid = TRUE THEN
-		INSERT INTO airplane(airlineID, tail_num, seat_cap, speed, flightID, locID, plane_type,
-			skids, props, jets, progress, airplane_status, next_time) VALUES
-		(ip_airlineID, ip_tail_num, ip_seat_capacity, ip_speed, ip_locationID, ip_plane_type, ip_skids, ip_propellers, ip_jet_engines);
-    END IF;
+	INSERT INTO airplane(airlineID, tail_num, seat_capacity, speed, locationID, plane_type,
+		skids, propellers, jet_engines) VALUES
+	(ip_airlineID, ip_tail_num, ip_seat_capacity, ip_speed, ip_locationID, ip_plane_type, ip_skids, ip_propellers, ip_jet_engines);
 
 end //
 delimiter ;
@@ -97,25 +93,23 @@ sp_main: begin
 	DECLARE valid BOOLEAN DEFAULT TRUE;
     
     # Must have unique airportID
-	IF (SELECT COUNT(*) FROM airport WHERE airport_id = ip_airportID) > 0 THEN
-		SET valid = FALSE;
+	IF (SELECT COUNT(*) FROM airport WHERE airportID = ip_airportID) > 0 THEN
+		LEAVE sp_main;
 	END IF;
     
     # Must have unique locationID
-    IF (SELECT COUNT(*) FROM location WHERE locID = ip_locationID) > 0 THEN
-		SET valid = FALSE;
+    IF (SELECT COUNT(*) FROM location WHERE locationID = ip_locationID) > 0 THEN
+		LEAVE sp_main;
 	END IF;
     
     # Must have a city, state
     IF ip_city = NULL OR ip_state = NULL THEN
-		SET valid = FALSE;
+		LEAVE sp_main;
 	END IF;
     
     
-    IF valid = TRUE THEN
-		INSERT INTO airport (airportID, airport_name, city, state, locID) VALUES
-			(ip_airportID, ip_airport_name, ip_city, ip_state, locID);
-    END IF;
+	INSERT INTO airport (airportID, airport_name, city, state, locationID) VALUES
+		(ip_airportID, ip_airport_name, ip_city, ip_state, ip_locationID);
 
 end //
 delimiter ;
@@ -142,35 +136,35 @@ sp_main: begin
 
 	# First and last name NOT required!
 
-	DECLARE valid BOOLEAN;
-    DECLARE isPilot BOOLEAN;
-    DECLARE	isPassenger BOOLEAN;
+	DECLARE valid BOOLEAN DEFAULT TRUE;
+    DECLARE isPilot BOOLEAN DEFAULT FALSE;
+    DECLARE	isPassenger BOOLEAN DEFAULT TRUE;
 
 	# Must have unique personID
-    IF (SELECT COUNT(*) FROM person WHERE personID = ip_personID) THEN
-		SET valid = FALSE;
+    IF (SELECT COUNT(*) FROM person WHERE personID = ip_personID) > 0 THEN
+		LEAVE sp_main;
     END IF;
     
     # Must have a valid locationID
-    IF (SELECT COUNT(*) FROM location WHERE locID = ip_locationID) = 0 THEN
-		SET valid = FALSE;
+    IF (SELECT COUNT(*) FROM location WHERE locationID = ip_locationID) = 0 THEN
+		LEAVE sp_main;
 	END IF;
     
     # Pilots will have a taxID (that's not used before), experience level
     IF ip_taxID != NULL OR ip_experience != NULL THEN
 		# If there's only one of the pilot values, then this is invalid input
 		IF ip_taxID = NULL OR ip_experience = NULL THEN
-			SET valid = FALSE;
+			SET isPilot = FALSE;
 		ELSE
 			# Cannot have just one of the flight info (but CAN have none)
 			IF ip_flying_airline != NULL OR ip_flying_tail != NULL THEN
 				IF ip_flying_airline = NULL OR ip_flying_tail = NULL THEN
-					SET valid = FALSE;
+					SET isPilot = FALSE;
 				END IF;
 			END IF;
 			# TaxID must not already be used!
 			IF (SELECT COUNT(*) FROM pilot WHERE taxID = ip_taxID) > 0 THEN
-				SET valid = FALSE;
+				SET isPilot = FALSE;
 			ELSE
 				SET isPilot = TRUE;
 			END IF;
@@ -183,17 +177,15 @@ sp_main: begin
 	END IF;
 
 	# Add to the person, pilot, and passenger tables!
-    IF valid THEN
-		INSERT INTO person (personID, first_name, last_name, locationID) VALUES
-			(ip_personID, ip_first_name, ip_last_name, ip_locationID);
-        IF isPassenger THEN
-			INSERT INTO passenger (personID, miles) VALUES
-			(ip_personID, ip_miles);
-        END IF;
-        IF isPilot THEN
-			INSERT INTO pilot (personID, taxID, experience, flying_airplane, flying_tail) VALUE
-				(ip_personID, ip_taxID, ip_experience, ip_flying_airplane, ip_flying_tail);
-        END IF;
+	INSERT INTO person (personID, first_name, last_name, locationID) VALUES
+		(ip_personID, ip_first_name, ip_last_name, ip_locationID);
+	IF isPassenger = TRUE THEN
+		INSERT INTO passenger (personID, miles) VALUES
+		(ip_personID, ip_miles);
+	END IF;
+	IF isPilot = TRUE THEN
+		INSERT INTO pilot (personID, taxID, experience, flying_airline, flying_tail) VALUE
+			(ip_personID, ip_taxID, ip_experience, ip_flying_airline, ip_flying_tail);
 	END IF;
 
 end //
@@ -209,25 +201,19 @@ delimiter //
 create procedure grant_pilot_license (in ip_personID varchar(50), in ip_license varchar(100))
 sp_main: begin
 
-	DECLARE valid BOOLEAN;
-    
     # Must be a pilot
-	IF (SELECT COUNT(*) FROM pilot WHERE ip_personID = personID) > 0 THEN
-		SET valid = FALSE;
+	IF (SELECT COUNT(*) FROM pilot WHERE personID = ip_personID) < 1 THEN
+		LEAVE sp_main;
     END IF;
     
     # The license cannot already exist for that pilot
     IF (SELECT COUNT(*) FROM pilot_licenses WHERE personID = ip_personID AND license = ip_license) > 0 THEN
-		SET valid = FALSE;
+		LEAVE sp_main;
 	END IF;
     
     # Insert into pilot_licenses table
-    IF valid THEN
-    
-		INSERT INTO pilot_licenses (personID, license) VALUES
-			(ip_personID, ip_license);
-    
-    END IF;
+	INSERT INTO pilot_licenses (personID, license) VALUES
+		(ip_personID, ip_license);
 
 end //
 delimiter ;
@@ -248,32 +234,28 @@ create procedure offer_flight (in ip_flightID varchar(50), in ip_routeID varchar
 sp_main: begin
 
 	# Not required to have a support airplane!
-
-	DECLARE valid BOOLEAN;
-
-	# FlightID cannot already exist
-    IF (SELECT COUNT(*) FROM flights WHERE flightID = ip_flightID) > 0 THEN
-        SET valid = FALSE;
-    END IF;
-    
-    # Must have a valid routeID
-    IF (SELECT COUNT(*) FROM route WHERE routeID = ip_routeID) = 0 THEN
-		SET valid = FALSE;
-    END IF;
     
     # Must have progress, status, and next_time if airplane is assigned
 	IF ip_support_airline != NULL OR ip_support_tail != NULL THEN
 		# If support_airline or support_tail is given, then its not valid if the rest isnt given
 		IF ip_support_airline = NULL OR ip_support_tail = NULL OR ip_progress = NULL OR ip_airplane_status = NULL OR ip_next_time THEN
-			SET valid = FALSE;
+			LEAVE sp_main;
         END IF;
+    END IF;
+    
+	# FlightID cannot already exist
+    IF (SELECT COUNT(*) FROM flight WHERE flightID = ip_flightID) > 0 THEN
+        LEAVE sp_main;
+    END IF;
+    
+    # Must have a valid routeID
+    IF (SELECT COUNT(*) FROM route WHERE routeID = ip_routeID) = 0 THEN
+		LEAVE sp_main;
     END IF;
 
 	# Insert into flights!
-    IF valid THEN
-		INSERT INTO flight (flightID, routeID, support_airline, support_tail, progress, airplane_status, next_time) VALUES
-			(ip_flightID, ip_routeID, ip_support_airline, ip_support_tail, ip_progress, ip_airplane_status, ip_next_time);
-    END IF;
+	INSERT INTO flight (flightID, routeID, support_airline, support_tail, progress, airplane_status, next_time) VALUES
+		(ip_flightID, ip_routeID, ip_support_airline, ip_support_tail, ip_progress, ip_airplane_status, ip_next_time);
 
 end //
 delimiter ;
@@ -488,27 +470,104 @@ delimiter ;
 -- -----------------------------------------------------------------------------
 create or replace view flights_in_the_air (departing_from, arriving_at, num_flights,
 	flight_list, earliest_arrival, latest_arrival, airplane_list) as
-select departing_from, arriving_at, SUM(flight_id) AS num_flights, null, null, null, null
-#FROM flight JOIN
-#SELECT departure AS departing_from FROM leg WHERE legID IN
-	#(SELECT legID FROM route_path WHERE sequence = 0 AND routeID IN )
+    
+SELECT flight_grouping.departing_from,
+	flight_grouping.arriving_at,
+	num_flights_grouping.num_flights, 
+    flightID AS flight_list, 
+    arrival_grouping.earliest_arrival, 
+    arrival_grouping.latest_arrival, 
+    locID AS airplane_list
+FROM 
+(SELECT dep.airportID AS departing_from, arr.airportID AS arriving_at, flightID, airplane.locationID AS locID FROM 
+	flight_management.flight JOIN flight_management.airplane 
+		ON (flight.support_airline, flight.support_tail) = (airplane.airlineID, airplane.tail_num)
+	CROSS JOIN flight_management.airport AS dep
+    CROSS JOIN flight_management.airport AS arr
+	WHERE flight.airplane_status = 'in_flight' 
+    # Only take the flights that start at (depart from) the matching arport
+    # routeID of route_path where the first leg departs from the matching airport
+	AND flight.routeID IN (SELECT routeID FROM route_path WHERE sequence = flight.progress 
+		AND legID IN (SELECT legID FROM leg WHERE arrival = arr.airportID))
+	AND flight.routeID IN (SELECT routeID FROM route_path WHERE sequence = flight.progress 
+        AND legID IN (SELECT legID FROM leg WHERE departure = dep.airportID))       
+) AS flight_grouping
+JOIN
+(SELECT dep.airportID AS departing_from,
+	arr.airportID AS arriving_at,
+	COUNT(*) AS num_flights
+FROM flight_management.airport AS dep CROSS JOIN flight_management.airport AS arr CROSS JOIN flight_management.flight
+	WHERE flight.airplane_status = 'in_flight'
+	AND flight.routeID IN (SELECT routeID FROM route_path WHERE sequence = flight.progress 
+		AND legID IN (SELECT legID FROM leg WHERE arrival = arr.airportID))
+	AND flight.routeID IN (SELECT routeID FROM route_path WHERE sequence = flight.progress 
+        AND legID IN (SELECT legID FROM leg WHERE departure = dep.airportID))
+GROUP BY dep.airportID, arr.airportID) AS num_flights_grouping
+ON flight_grouping.departing_from = num_flights_grouping.departing_from AND flight_grouping.arriving_at = num_flights_grouping.arriving_at
+JOIN
+(SELECT dep.airportID AS departing_from,
+	arr.airportID AS arriving_at,
+	MIN(next_time) AS earliest_arrival,
+    MAX(next_time) AS latest_arrival
+FROM flight_management.airport AS dep CROSS JOIN flight_management.airport AS arr CROSS JOIN flight_management.flight
+	WHERE flight.airplane_status = 'in_flight'
+	AND flight.routeID IN (SELECT routeID FROM route_path WHERE sequence = flight.progress 
+		AND legID IN (SELECT legID FROM leg WHERE arrival = arr.airportID))
+	AND flight.routeID IN (SELECT routeID FROM route_path WHERE sequence = flight.progress 
+        AND legID IN (SELECT legID FROM leg WHERE departure = dep.airportID))
+GROUP BY dep.airportID, arr.airportID) AS arrival_grouping
+ON arrival_grouping.departing_from = num_flights_grouping.departing_from AND arrival_grouping.arriving_at = num_flights_grouping.arriving_at;
 
-#GROUP BY (departing_from, arriving_at)
 
 
-# departing_from = departing of leg of Min(sequence) of routeID referenced by flight
-# arriving_at = arriving of leg of Max(sequence) of routeID referenced by flight
-# Group by
-
-#GROUP BY (departing_from, arriving_at);
 
 -- [20] flights_on_the_ground()
 -- -----------------------------------------------------------------------------
 /* This view describes where flights that are currently on the ground are located. */
 -- -----------------------------------------------------------------------------
 create or replace view flights_on_the_ground (departing_from, num_flights,
-	flight_list, earliest_arrival, latest_arrival, airplane_list) as 
-select null, 0, null, null, null, null;
+	flight_list, earliest_arrival, latest_arrival, airplane_list) as
+
+# We are naturally joining together all info about the flight and all group (COUNT, MIN, MAX) info about each airport
+
+SELECT airportID AS departing_from, 
+	num_flights_grouping.num_flights, 
+    flightID AS flight_list, 
+    arrival_grouping.earliest_arrival, 
+    arrival_grouping.latest_arrival, 
+    locID AS airplane_list 
+FROM 
+(SELECT airportID, flightID, airplane.locationID AS locID FROM 
+	flight_management.flight JOIN flight_management.airplane 
+		ON (flight.support_airline, flight.support_tail) = (airplane.airlineID, airplane.tail_num)
+	CROSS JOIN flight_management.airport
+	WHERE flight.airplane_status = 'on_ground' 
+    # Only take the flights that start at (depart from) the matching arport
+    # routeID of route_path where the first leg departs from the matching airport
+    AND flight.routeID IN (SELECT routeID FROM route_path WHERE sequence = flight.progress + 1 AND legID IN
+		(SELECT legID FROM leg WHERE departure = airport.airportID))
+) AS flight_grouping
+LEFT OUTER JOIN
+(SELECT airportID AS departing_from,
+	COUNT(*) AS num_flights
+FROM flight_management.airport CROSS JOIN flight_management.flight
+	WHERE flight.airplane_status = 'on_ground'
+	AND flight.routeID IN (SELECT routeID FROM route_path WHERE sequence = flight.progress + 1 AND legID IN
+			(SELECT legID FROM leg WHERE departure = airportID))
+GROUP BY airportID) AS num_flights_grouping
+ON flight_grouping.airportID = num_flights_grouping.departing_from
+LEFT OUTER JOIN
+(SELECT airportID AS departing_from,
+	MIN(next_time) AS earliest_arrival,
+    MAX(next_time) AS latest_arrival
+FROM flight_management.airport CROSS JOIN flight_management.flight
+	WHERE flight.airplane_status = 'on_ground'
+	AND (flight.routeID IN (SELECT routeID FROM route_path WHERE flight.progress != 0 AND sequence = flight.progress AND legID IN
+		(SELECT legID FROM leg WHERE arrival = airportID))
+	OR flight.routeID IN (SELECT routeID FROM route_path WHERE flight.progress = 0 AND sequence = 1 AND legID IN
+		(SELECT legID FROM leg WHERE departure = airportID)))
+GROUP BY airportID) AS arrival_grouping
+ON arrival_grouping.departing_from = num_flights_grouping.departing_from;
 
 -- [21] people_in_the_air()
 -- -----------------------------------------------------------------------------

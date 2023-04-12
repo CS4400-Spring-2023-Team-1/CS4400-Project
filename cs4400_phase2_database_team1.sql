@@ -485,7 +485,7 @@ INSERT INTO ticket (ticketID, cost, flightID, airportID, personID) VALUES
 ('tkt_un_4', 175, 'UN_1899', 'DCA', 'p27'),
 ('tkt_un_5', 225, 'UN_523', 'ATL', 'p28'),
 ('tkt_un_6', 100, 'UN_523', 'ORD', 'p29');
-
+time
 DROP TABLE IF EXISTS seat;
 CREATE TABLE seat (
 	seat_num CHAR(2) NOT NULL,
