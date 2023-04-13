@@ -547,6 +547,28 @@ drop procedure if exists passengers_disembark;
 delimiter //
 create procedure passengers_disembark (in ip_flightID varchar(50))
 sp_main: begin
+declare vrouteID varchar(50);
+declare vlegID varchar(50);
+declare vprogress varchar(50);
+declare vairportID varchar(50);
+declare vlocation varchar(50);
+
+
+set vrouteID = (select routeID from flight where flightID = ip_flightID);
+
+set vlegID = (select legID from route_path where routeIX = vrouteID and sequence = vprogress);
+
+set vprogress = (select progress from flight where flightID = ip_flightID);
+
+set vairportID = (select arrival from leg where legID = vlegID);
+
+set vlocation = (select locationID from airport where airportID = vairportID);
+
+if not exists(select routeID from flight where airplane_status = 'on_ground' and flightID = ip_flightID) then leave sp_main; end if;
+
+update person set locationID = vlocation where personID in 
+(select customer from ticket where carrier = ip_flightID and deplane_at = vairportID);
+
 
 end //
 delimiter ;
@@ -590,6 +612,15 @@ drop procedure if exists retire_flight;
 delimiter //
 create procedure retire_flight (in ip_flightID varchar(50))
 sp_main: begin
+drop table if exists route_length;
+	create table route_length as select routeID, max(sequence) as 'max'  from route_path natural join flight group by routeID ;
+	delete from flight 
+	where  flightID = ip_flightID 
+	and airplane_status = 'on_ground' 
+    and ( progress = 0 
+		or flightID in 
+			(select * from (select flightID from flight join route_length on flight.routeID = route_length.routeID where progress = max)tblTmp));
+	drop table route_length;
 
 end //
 delimiter ;
@@ -607,6 +638,18 @@ drop procedure if exists remove_passenger_role;
 delimiter //
 create procedure remove_passenger_role (in ip_personID varchar(50))
 sp_main: begin
+delete from ticket  
+	where customer = ip_personID; 
+   
+	
+	delete from passenger  
+	where personID = ip_personID; 
+    
+	
+	delete from person  
+	where person.personID = ip_personID
+    and personID not in
+	(select * from (select pilot.personID from  passenger join pilot on passenger.personID = pilot.personID) tblTmp);
 
 end //
 delimiter ;
@@ -624,6 +667,35 @@ drop procedure if exists remove_pilot_role;
 delimiter //
 create procedure remove_pilot_role (in ip_personID varchar(50))
 sp_main: begin
+drop table if exists route_length;
+	create table route_length as select routeID, max(sequence) as 'max'  from route_path natural join flight group by routeID ;
+	drop table if exists temp1 ;
+	create temporary table temp1 as select * from route_length as rp natural join flight ;
+	
+    delete from pilot_licenses 
+	where personID = ip_personID
+    and personID in
+    (select * from (
+		(select personID from pilot join temp1 on support_tail = flying_tail where airplane_status like 'on_ground'and (progress = max or progress =0)) union (select personID from pilot where flying_tail is null) 
+    )tblTmp) ;
+    
+    delete from pilot  
+	where personID = ip_personID and personID in 
+    (select * from (
+		(select personID from pilot join temp1 on support_tail = flying_tail where airplane_status like 'on_ground'and (progress = max or progress =0)) union (select personID from pilot where flying_tail is null) 
+    )tblTmp) ;
+    
+	
+    
+	delete from person  
+	where person.personID = ip_personID
+    and personID not in
+	(select * from 
+		(select passenger.personID from passenger join pilot on passenger.personID = pilot.personID) 
+	tblTmp);
+
+	drop table route_length;
+	drop table temp1;
 
 end //
 delimiter ;
@@ -756,7 +828,14 @@ select null, null, null, null, null, 0, 0, null, null;
 -- -----------------------------------------------------------------------------
 create or replace view route_summary (route, num_legs, leg_sequence, route_length,
 	num_flights, flight_list, airport_sequence) as
-select null, 0, null, 0, 0, null, null;
+select route_path.routeID as route,
+count( distinct legID) as num_legs, 
+GROUP_CONCAT( distinct  route_path.legID order by sequence) as leg_sequence, 
+round(sum(distance)/greatest(1,count(distinct flightID))) as route_length,
+count(Distinct flightID)as num_flights, group_concat(distinct flight.flightID) as flight_list, 
+group_concat(distinct concat( leg.departure, '->', leg.arrival) order by sequence) as 'airport_sequence'
+from route_path natural join leg left outer join flight on flight.routeID = route_path.routeID group by route_path.routeID;
+
 
 -- [24] alternative_airports()
 -- -----------------------------------------------------------------------------
@@ -764,8 +843,15 @@ select null, 0, null, 0, 0, null, null;
 -- -----------------------------------------------------------------------------
 create or replace view alternative_airports (city, state, num_airports,
 	airport_code_list, airport_name_list) as
-select null, null, 0, null, null;
-
+create or replace view alternative_airports (city, state, num_airports,
+	airport_code_list, airport_name_list) as
+select city, state, 
+count(*) as num_airports, 
+GROUP_CONCAT( distinct airportID) as airport_code_list, 
+group_concat(distinct airport_name order by airportID) as airport_name_list
+from airport 
+group by city,state 
+having count(*) >1;
 -- [25] simulation_cycle()
 -- -----------------------------------------------------------------------------
 /* This stored procedure executes the next step in the simulation cycle.  The flight
