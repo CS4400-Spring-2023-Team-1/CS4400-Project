@@ -306,7 +306,23 @@ delimiter //
 create procedure add_update_leg (in ip_legID varchar(50), in ip_distance integer,
     in ip_departure char(3), in ip_arrival char(3))
 sp_main: begin
-
+	# Check if arguments are valid
+    # Check if a leg from the departure airport to the arrival airport already exists. 
+    if (select count(*) from leg where leg.departure = ip_departure and leg.arrival = ip_arrival) > 0 then
+		# If such leg already exists then do not create a new leg. Instead update the current leg found.
+        update leg
+        set leg.distance = ip_distance # update leg's distance but NOT ID
+        where leg.legID = ip_legID;
+        # If a leg in the opposite direction exists, also updates its distance to maintain symmetry.
+        if (select count(*) from leg where leg.departure = ip_arrival and leg.arrival = ip_departure) > 0 then
+			update leg
+            set leg.distance = ip_distance
+            where leg.departure = ip_arrival and leg.arrival = ip_departure;
+        end if;
+		leave sp_main;
+	end if;
+	insert into leg (legID, distance, departure, arrival) values
+		(ip_legID, ip_distance, ip_departure, ip_arrival);
 end //
 delimiter ;
 
