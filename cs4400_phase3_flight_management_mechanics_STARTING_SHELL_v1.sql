@@ -426,7 +426,7 @@ sp_main: begin
 		SET progress = current_progress;
         SET airplane_status = 'on_ground';
         # Delay by 30 min
-        SET num_minutes = num_minutes + 30;
+        SET num_minutes = 30;
         SET next_time = cast(ADDTIME(curr_time, num_minutes) AS TIME);
 	ELSE 
 		SET progress = current_progress + 1;
@@ -450,26 +450,26 @@ delimiter //
 create procedure passengers_board (in ip_flightID varchar(50))
 sp_main: begin
 
-	DECLARE current_progress INTEGER DEFAULT 0;
+	DECLARE current_leg INTEGER DEFAULT 0;
     DECLARE current_status VARCHAR(100) DEFAULT NULL;
     DECLARE num_legs INTEGER DEFAULT 0;
-    DECLARE curr_time TIME DEFAULT NULL;
+    DECLARE current_next_time TIME DEFAULT NULL;
     
     DECLARE departing_airport CHAR(3);
     DECLARE arriving_airport CHAR(3);
     DECLARE plane VARCHAR(50) DEFAULT NULL;
-    DECLARE myPort VARCHAR(50) DEFAULT NULL;
+    DECLARE current_port VARCHAR(50) DEFAULT NULL;
     
 	# Make sure that the flightID exists
 	IF (SELECT COUNT(*) FROM flight WHERE flight.flightID = ip_flightID) < 1 THEN
 		LEAVE sp_main;
 	END IF;
     
-    SET current_progress = (SELECT progress FROM flight WHERE flight.flightID = ip_flightID);
+    SET current_leg = (SELECT progress FROM flight WHERE flight.flightID = ip_flightID);
     SET num_legs = (SELECT COUNT(*) FROM flight JOIN route_path ON flight.routeID = route_path.routeID
 					WHERE flight.flightID = ip_flightID);
                     
-	SET curr_time = (SELECT next_time FROM flight WHERE flight.flightID = ip_flightID);
+	SET current_next_time = (SELECT next_time FROM flight WHERE flight.flightID = ip_flightID);
     SET current_status = (SELECT airplane_status FROM flight WHERE flight.flightID = ip_flightID);
     
 	# Passengers cannot board a plane in flight
@@ -478,30 +478,33 @@ sp_main: begin
 	END IF;
     
     # Passengers cannot board a plane on its last leg
-	IF current_progress >= num_legs THEN
+	IF current_leg >= num_legs THEN
 		LEAVE sp_main;
 	END IF;
     
+    # In form 'ATL'
     SET departing_airport = (SELECT leg.departure FROM (leg JOIN route_path ON leg.legID = route_path.legID)
-							JOIN flight ON route_path.routeID = flight.routeID AND route_path.sequence = flight.progress + 1
+							JOIN flight ON route_path.routeID = flight.routeID AND route_path.sequence = current_leg + 1
                             WHERE flight.flightID = ip_flightID);
-                            
+    
+    # In form 'ATL'
 	SET arriving_airport = (SELECT leg.arrival FROM (leg JOIN route_path ON leg.legID = route_path.legID)
-							JOIN flight ON route_path.routeID = flight.routeID AND route_path.sequence = flight.progress + 1
+							JOIN flight ON route_path.routeID = flight.routeID AND route_path.sequence = current_leg + 1
                             WHERE flight.flightID = ip_flightID);
 	
-    SET myPort = (SELECT airport.locationID FROM airport WHERE airport.airportID = departing_airport);
-	SET plane = (SELECT airplane.locationID FROM airplane JOIN flight
-					ON airplane.airlineID = flight.support_airline AND airplane.tail_num = flight.support_tail);
+    # In form port_1
+    SET current_port = (SELECT airport.locationID FROM airport WHERE airport.airportID = departing_airport);
     
-    # Update where person is located (from port x -> plane y) for all valid locations AND tickets
+    # In form plane_1
+	SET plane = (SELECT airplane.locationID FROM airplane JOIN flight ON airplane.airlineID = flight.support_airline 
+					AND airplane.tail_num = flight.support_tail);
+    
+    # Update where person is located (from port x -> plane y) if valid location and ticket
     UPDATE person SET person.locationID = plane 
-			WHERE person.locationID = myPort
+			WHERE person.locationID = current_port
             AND personID IN (SELECT ticket.customer FROM ticket 
 							WHERE ticket.carrier = ip_flightID
                             AND ticket.deplane_at = arriving_airport);
-    UPDATE passenger SET miles = 
-
 end //
 delimiter ;
 
