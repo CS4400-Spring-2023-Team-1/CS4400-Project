@@ -356,6 +356,79 @@ delimiter //
 create procedure flight_takeoff (in ip_flightID varchar(50))
 sp_main: begin
 
+	DECLARE plane_type VARCHAR(100) DEFAULT NULL;
+	DECLARE num_pilots INTEGER DEFAULT 0;
+	DECLARE flight_shortage BOOLEAN DEFAULT FALSE;
+    
+    DECLARE current_progress INTEGER DEFAULT 0;
+    DECLARE current_status VARCHAR(100) DEFAULT NULL;
+    DECLARE num_legs INTEGER DEFAULT 0;
+    DECLARE curr_time TIME DEFAULT NULL;
+    
+	DECLARE progress INTEGER DEFAULT 0;
+    DECLARE airplane_status VARCHAR(100) DEFAULT NULL;
+    DECLARE next_time TIME DEFAULT NULL;
+    
+    DECLARE airplane_speed INTEGER DEFAULT 0;
+    DECLARE distance INTEGER DEFAULT 0;
+    DECLARE num_minutes INTEGER DEFAULT 0;
+                
+	# Make sure that the flightID exists
+	IF (SELECT COUNT(*) FROM flight WHERE flight.flightID = ip_flightID) < 1 THEN
+		LEAVE sp_main;
+	END IF;
+    
+    SET current_progress = (SELECT progress FROM flight WHERE flight.flightID = ip_flightID);
+    SET num_legs = (SELECT COUNT(*) FROM flight JOIN route_path ON flight.routeID = route_path.routeID
+					WHERE flight.flightID = ip_flightID);
+    # Make sure that the flight can take off (i.e. not on last leg)
+	IF current_progress >= num_legs THEN
+		LEAVE sp_main;
+	END IF;
+    
+    SET curr_time = (SELECT next_time FROM flight WHERE flight.flightID = ip_flightID);
+    SET current_status = (SELECT airplane_status FROM flight WHERE flight.flightID = ip_flightID);
+    # Make sure that the flight is not already in the air
+    IF current_status = 'in_flight' THEN
+		LEAVE sp_main;
+	END IF;
+    
+    SET plane_type = (SELECT airplane.plane_type FROM airplane JOIN flight 
+						ON airplane.airlineID = flight.support_airline AND airplane.tail_num = flight.support_tail 
+						WHERE flight.flightID = ip_flightID);
+	SET num_pilots = (SELECT COUNT(*) FROM (airplane JOIN flight 
+						ON airplane.airlineID = flight.support_airline AND airplane.tail_num = flight.support_tail)  
+						JOIN pilot ON airplane.airlineID = pilot.flying_airline AND airplane.tail_num = pilot.flying_tail
+						WHERE flight.flightID = ip_flightID);
+	# Propellor driven airplanes should have at least one pilot assigned
+    # Jet driven airplanes should have at least two pilots assigned
+	IF (plane_type = 'prop' AND num_pilots < 1) OR (plane_type = 'jet' AND num_pilots < 2) THEN
+		SET flight_shortage = TRUE;
+	END IF;
+    
+    # Compute next_time with airplane_speed and distance
+    SET airplane_speed = (SELECT airplane.speed FROM airplane JOIN flight 
+							ON airplane.airlineID = flight.support_airline AND airplane.tail_num = flight.support_tail 
+							WHERE flight.flightID = ip_flightID);
+	SET distance = (SELECT leg.distance FROM (leg JOIN route_path
+						ON leg.legID = route_path.legID) JOIN flight ON route_path.routeID = flight.routeID
+                        WHERE flight.flightID = ip_flightID);
+	### NUM_MINUTES INCORRECT (go back to this)
+    SET num_minutes = (distance / airplane_speed) * 60;
+    IF flight_shortage THEN
+		SET progress = current_progress;
+        SET airplane_status = 'on_ground';
+        # Delay by 30 min
+        SET num_minutes = num_minutes + 30;
+        SET next_time = cast(ADDTIME(curr_time, num_minutes) AS TIME);
+	ELSE 
+		SET progress = current_progress + 1;
+        SET airplane_status = 'in_flight';
+        SET next_time = cast(ADDTIME(curr_time, num_minutes) AS TIME);
+	END IF;
+        
+	UPDATE flight SET flight.progress = progress, flight.airplane_status = airplane_status, 
+		flight.next_time = next_time WHERE flight.flightID = ip_flightID;
 end //
 delimiter ;
 
@@ -369,6 +442,16 @@ drop procedure if exists passengers_board;
 delimiter //
 create procedure passengers_board (in ip_flightID varchar(50))
 sp_main: begin
+
+	
+
+	# Make sure that the flightID exists
+	IF (SELECT COUNT(*) FROM flight WHERE flight.flightID = ip_flightID) < 1 THEN
+		LEAVE sp_main;
+	END IF;
+    
+    # Passengers must be at the airport
+    
 
 end //
 delimiter ;
