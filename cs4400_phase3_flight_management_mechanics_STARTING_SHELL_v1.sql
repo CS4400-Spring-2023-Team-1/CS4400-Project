@@ -276,7 +276,20 @@ create procedure purchase_ticket_and_seat (in ip_ticketID varchar(50), in ip_cos
 	in ip_carrier varchar(50), in ip_customer varchar(50), in ip_deplane_at char(3),
     in ip_seat_number varchar(50))
 sp_main: begin
-
+	# Check if arguments are valid.
+    # The flight must be tied to a valid person for a valid flight.
+    if (select count(*) from flight where lower(substring(flight.flightID, 1, 2)) = substring(ip_ticketID, 5, 2)) < 1 then
+		leave sp_main;
+	end if;
+	# The seat must be unoccupied.
+    if (select count(*) from ticket_seats where ip_seat_number = ticket_seats.seat_number) > 0 then
+		leave sp_main;
+	end if;
+    
+	insert into ticket (ticketID, cost, carrier, customer, deplane_at) values
+		(ip_ticketID, 0, ip_carrier, ip_customer, ip_deplane_at);
+    insert into ticket_seats (ticketID, seat_number) values
+		(ip_ticketID, ip_seat_number);
 end //
 delimiter ;
 
