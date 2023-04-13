@@ -336,7 +336,13 @@ drop procedure if exists start_route;
 delimiter //
 create procedure start_route (in ip_routeID varchar(50), in ip_legID varchar(50))
 sp_main: begin
-
+	----------------------------------------------------------------------
+	# QUESTION: Do I need to check if routeID and legID already exist in the tables?
+    ----------------------------------------------------------------------
+	insert into route_path (routeID, legID, sequence) values
+		(ip_routeID, ip_legID, 1);
+	insert into route (routeID) values
+		(ip_routeID);
 end //
 delimiter ;
 
