@@ -281,9 +281,9 @@ sp_main: begin
     if (select count(*) from (ticket join ticket_seats on ticket.ticketID = ticket_seats.ticketID) where ip_seat_number = seat_number and ip_carrier = carrier) > 0 then
 		leave sp_main;
 	end if;
-   
+	
 	insert into ticket (ticketID, cost, carrier, customer, deplane_at) values
-		(ip_ticketID, 0, ip_carrier, ip_customer, ip_deplane_at);
+		(ip_ticketID, ip_cost, ip_carrier, ip_customer, ip_deplane_at);
     insert into ticket_seats (ticketID, seat_number) values
 		(ip_ticketID, ip_seat_number);
 end //
@@ -332,11 +332,11 @@ drop procedure if exists start_route;
 delimiter //
 create procedure start_route (in ip_routeID varchar(50), in ip_legID varchar(50))
 sp_main: begin
-	# QUESTION: Do I need to check if routeID and legID already exist in the tables?
+	/*# QUESTION: Do I need to check if routeID and legID already exist in the tables?
 	insert into route_path (routeID, legID, sequence) values
 		(ip_routeID, ip_legID, 1);
 	insert into route (routeID) values
-		(ip_routeID);
+		(ip_routeID);*/
 end //
 delimiter ;
 
@@ -351,13 +351,13 @@ drop procedure if exists extend_route;
 delimiter //
 create procedure extend_route (in ip_routeID varchar(50), in ip_legID varchar(50))
 sp_main: begin
-	# Check if ip_routeID already exists in the route table. If not, insert ip_routeID into route.
+	/*# Check if ip_routeID already exists in the route table. If not, insert ip_routeID into route.
     if (select count(*) from route where route.routeID = ip_routeID) = 0 then
 		insert into route (routeID) values
 			(ip_routeID);
 	end if;
 	insert into route_path (routeID, legID, sequence) values
-		(ip_routeID, ip_legID, (select count(*) from route_path where route_path.routeID = ip_routeID) + 1);
+		(ip_routeID, ip_legID, (select count(*) from route_path where route_path.routeID = ip_routeID) + 1);*/
 end //
 delimiter ;
 
@@ -373,7 +373,7 @@ drop procedure if exists flight_landing;
 delimiter //
 create procedure flight_landing (in ip_flightID varchar(50))
 sp_main: begin
-	# Check if ip_flightID exists in flight table.
+	/*# Check if ip_flightID exists in flight table.
     if (select count(*) from flight where flight.flightID = ip_flightID) = 0 then
 		leave sp_main;
 	end if;
@@ -391,7 +391,7 @@ sp_main: begin
     # Update the frequent flyer miles of the passengers.
     /*update passenger
     set*/
-    # OK this is still in progress- I think it's gonna be super complicated and involve multiple tables.
+    # OK this is still in progress- I think it's gonna be super complicated and involve multiple tables.*/
 end //
 delimiter ;
 
@@ -503,7 +503,7 @@ delimiter //
 create procedure passengers_board (in ip_flightID varchar(50))
 sp_main: begin
 
-	DECLARE current_leg INTEGER DEFAULT 0;
+	/*DECLARE current_leg INTEGER DEFAULT 0;
     DECLARE current_status VARCHAR(100) DEFAULT NULL;
     DECLARE num_legs INTEGER DEFAULT 0;
     DECLARE current_next_time TIME DEFAULT NULL;
@@ -557,7 +557,7 @@ sp_main: begin
 			WHERE person.locationID = current_port
             AND personID IN (SELECT ticket.customer FROM ticket 
 							WHERE ticket.carrier = ip_flightID
-                            AND ticket.deplane_at = arriving_airport);
+                            AND ticket.deplane_at = arriving_airport);*/
 end //
 delimiter ;
 
@@ -828,6 +828,7 @@ ON arrival_grouping.departing_from = num_flights_grouping.departing_from;
 create or replace view people_in_the_air (departing_from, arriving_at, num_airplanes,
 	airplane_list, flight_list, earliest_arrival, latest_arrival, num_pilots,
 	num_passengers, joint_pilots_passengers, person_list) as
+    select null, null, null, null, null, null, null, null, null, null, null;
 
 -- [22] people_on_the_ground()
 -- -----------------------------------------------------------------------------
