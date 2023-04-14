@@ -336,9 +336,7 @@ drop procedure if exists start_route;
 delimiter //
 create procedure start_route (in ip_routeID varchar(50), in ip_legID varchar(50))
 sp_main: begin
-	----------------------------------------------------------------------
 	# QUESTION: Do I need to check if routeID and legID already exist in the tables?
-    ----------------------------------------------------------------------
 	insert into route_path (routeID, legID, sequence) values
 		(ip_routeID, ip_legID, 1);
 	insert into route (routeID) values
@@ -357,7 +355,13 @@ drop procedure if exists extend_route;
 delimiter //
 create procedure extend_route (in ip_routeID varchar(50), in ip_legID varchar(50))
 sp_main: begin
-
+	# Check if ip_routeID already exists in the route table. If not, insert ip_routeID into route.alter
+    if (select count(*) from route where route.routeID = ip_routeID) = 0 then
+		insert into route (routeID) values
+		(ip_routeID);
+	end if;
+	insert into route_path (routeID, legID, sequence) values
+		(ip_routeID, ip_legID, (select count(*) from route_path where route_path.routeID = ip_routeID) + 1);
 end //
 delimiter ;
 
