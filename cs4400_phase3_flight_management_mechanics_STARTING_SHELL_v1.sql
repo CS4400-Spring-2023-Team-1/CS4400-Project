@@ -355,10 +355,10 @@ drop procedure if exists extend_route;
 delimiter //
 create procedure extend_route (in ip_routeID varchar(50), in ip_legID varchar(50))
 sp_main: begin
-	# Check if ip_routeID already exists in the route table. If not, insert ip_routeID into route.alter
+	# Check if ip_routeID already exists in the route table. If not, insert ip_routeID into route.
     if (select count(*) from route where route.routeID = ip_routeID) = 0 then
 		insert into route (routeID) values
-		(ip_routeID);
+			(ip_routeID);
 	end if;
 	insert into route_path (routeID, legID, sequence) values
 		(ip_routeID, ip_legID, (select count(*) from route_path where route_path.routeID = ip_routeID) + 1);
@@ -377,7 +377,25 @@ drop procedure if exists flight_landing;
 delimiter //
 create procedure flight_landing (in ip_flightID varchar(50))
 sp_main: begin
-
+	# Check if ip_flightID exists in flight table.
+    if (select count(*) from flight where flight.flightID = ip_flightID) = 0 then
+		leave sp_main;
+	end if;
+    
+    # Update the state for the flight.
+    update flight
+	set flight.airplane_status = 'on_ground', flight.next_time =  DATEADD(hour, 1, (select next_time from flight where flight.flightID = ip_flightID))
+	where flight.flightID = ip_flightID;
+    
+    # Increase the experience of the pilot.
+    update pilot
+    set pilot.experience = pilot.experience + 1
+    where pilot.flying_tail = (select support_tail from flight where flight.support_tail = pilot.flying_tail);
+    
+    # Update the frequent flyer miles of the passengers.
+    /*update passenger
+    set*/
+    # OK this is still in progress- I think it's gonna be super complicated and involve multiple tables.
 end //
 delimiter ;
 
