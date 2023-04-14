@@ -277,15 +277,11 @@ create procedure purchase_ticket_and_seat (in ip_ticketID varchar(50), in ip_cos
     in ip_seat_number varchar(50))
 sp_main: begin
 	# Check if arguments are valid.
-    # The flight must be tied to a valid person for a valid flight.
-    if (select count(*) from flight where lower(substring(flight.flightID, 1, 2)) = substring(ip_ticketID, 5, 2)) < 1 then
-		leave sp_main;
-	end if;
 	# The seat must be unoccupied.
-    if (select count(*) from ticket_seats where ip_seat_number = ticket_seats.seat_number) > 0 then
+    if (select count(*) from (ticket join ticket_seats on ticket.ticketID = ticket_seats.ticketID) where ip_seat_number = seat_number and ip_carrier = carrier) > 0 then
 		leave sp_main;
 	end if;
-    
+   
 	insert into ticket (ticketID, cost, carrier, customer, deplane_at) values
 		(ip_ticketID, 0, ip_carrier, ip_customer, ip_deplane_at);
     insert into ticket_seats (ticketID, seat_number) values
@@ -832,7 +828,6 @@ ON arrival_grouping.departing_from = num_flights_grouping.departing_from;
 create or replace view people_in_the_air (departing_from, arriving_at, num_airplanes,
 	airplane_list, flight_list, earliest_arrival, latest_arrival, num_pilots,
 	num_passengers, joint_pilots_passengers, person_list) as
-select null, null, 0, null, null, null, null, 0, 0, null, null;
 
 -- [22] people_on_the_ground()
 -- -----------------------------------------------------------------------------

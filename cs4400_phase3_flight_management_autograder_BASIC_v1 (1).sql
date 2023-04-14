@@ -2847,7 +2847,7 @@ on query_status_category = title;
 -- The test case results are compared to the initial database state contents
 -- ----------------------------------------------------------------------------------
 
-drop procedure if exists magic44_check_test_case;
+drop function if exists magic44_check_test_case;
 delimiter //
 create procedure magic44_check_test_case(in ip_test_case_number integer)
 begin
