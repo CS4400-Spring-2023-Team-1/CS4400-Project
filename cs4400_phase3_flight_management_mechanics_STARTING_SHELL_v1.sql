@@ -863,8 +863,6 @@ from route_path natural join leg left outer join flight on flight.routeID = rout
 -- -----------------------------------------------------------------------------
 create or replace view alternative_airports (city, state, num_airports,
 	airport_code_list, airport_name_list) as
-create or replace view alternative_airports (city, state, num_airports,
-	airport_code_list, airport_name_list) as
 select city, state, 
 count(*) as num_airports, 
 GROUP_CONCAT( distinct airportID) as airport_code_list, 
