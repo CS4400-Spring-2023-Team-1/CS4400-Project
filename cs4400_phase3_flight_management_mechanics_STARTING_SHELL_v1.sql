@@ -278,7 +278,7 @@ create procedure purchase_ticket_and_seat (in ip_ticketID varchar(50), in ip_cos
 sp_main: begin
 	# Check if arguments are valid.
 	# The seat must be unoccupied.
-    if (select count(*) from (ticket join ticket_seats on ticket.ticketID = ticket_seats.ticketID) where ip_seat_number = seat_number and ip_carrier = carrier) > 0 then
+   if (select count(*) from (ticket join ticket_seats on ticket.ticketID = ticket_seats.ticketID) where ip_seat_number = seat_number and ip_carrier = carrier) > 0 then
 		leave sp_main;
 	end if;
 	
