@@ -336,6 +336,10 @@ sp_main: begin
 		leave sp_main;
 	end if;
     
+	if (select count(*) from route_path where route_path.legID = ip_legID) = 0 then
+		leave sp_main;
+	end if;
+    
 	insert into route (routeID) values
 		(ip_routeID);
 	insert into route_path (routeID, legID, sequence) values
@@ -775,22 +779,20 @@ ON arrival_grouping.departing_from = num_flights_grouping.departing_from AND arr
 create or replace view flights_on_the_ground (departing_from, num_flights,
 	flight_list, earliest_arrival, latest_arrival, airplane_list) as
 
-# We are naturally joining together all info about the flight and all group (COUNT, MIN, MAX) info about each airport
-
-/*
-
-1 1 on ground
-2 2 in flight
-2 2 on ground
-3 3 on ground
+-- We are naturally joining together all info about the flight and all group (COUNT, MIN, MAX) info about each airport
 
 
 
-*/
+-- 1 1 on ground
+-- 2 2 in flight
+-- 2 2 on ground
+-- 3 3 on ground
 
-# If progress and sequence are equal and on ground, it's at the arrival airport of the leg
-# UNION
-# Another case where sequence will always be 1, progress will always be 0 and the departure will always be location id;
+
+
+-- # If progress and sequence are equal and on ground, it's at the arrival airport of the leg
+-- # UNION
+-- # Another case where sequence will always be 1, progress will always be 0 and the departure will always be location id;
 
 SELECT airportID AS departing_from, 
 	num_flights_grouping.num_flights, 
@@ -835,10 +837,40 @@ ON arrival_grouping.departing_from = num_flights_grouping.departing_from;
 -- -----------------------------------------------------------------------------
 /* This view describes where people who are currently airborne are located. */
 -- -----------------------------------------------------------------------------
+
+create or replace view table1 as
+select  count(*) as num_airplanes, group_concat(distinct locationID) as 'airplane_list', flightID, min(next_time) as 'earliest_arrival', max(next_time) as 'latest_arrival'  from airplane join flight 
+on airlineID = support_airline and support_tail = tail_num where tail_num in (select support_tail from flight where airplane_status like '%in_flight') group by flightID;
+
+create or replace view people as
+SELECT
+
+  p.personid,
+  p.locationID,
+  pi.personid AS pilot_personid,
+  pa.personid AS passenger_personid
+FROM person p
+LEFT JOIN pilot as pi ON p.personid = pi.personID
+LEFT JOIN passenger as pa ON p.personid = pa.personID;
+
+create or replace view view2 as
+select * from flight, airplane where support_tail = tail_num;
+
+create or replace view view3 as
+select people.locationID, flightID as fID, sum(case when pilot_personid is not null then 1 else 0 end) as num_pilots, sum(case when passenger_personid is not null then 1 else 0 end) as num_passengers, count(distinct personID) as joint_pilots_passengers , group_concat(personID) as person_list from people join view2 where people.locationID = view2.locationID and tail_num in (select support_tail from flight where airplane_status like '%in_flight') group by people.locationID, flightID;
+
+create or replace view view4 as
+select departure, arrival,num_airplanes, airplane_list, earliest_arrival,latest_arrival from table1, leg, flight, route_path, route_summary
+where flight.flightID = table1.flightID 
+and route_path.routeID = flight.routeID 
+and route_summary.route = flight.routeID 
+and leg.legID = route_path.legID 
+and route_path.sequence = flight.progress;
+				
 create or replace view people_in_the_air (departing_from, arriving_at, num_airplanes,
 	airplane_list, flight_list, earliest_arrival, latest_arrival, num_pilots,
 	num_passengers, joint_pilots_passengers, person_list) as
-select null, null, 0, null, null, null, null, 0, 0, null, null;
+select departure,arrival,num_airplanes,airplane_list,fID as flight_list, earliest_arrival,latest_arrival,num_pilots,num_passengers,joint_pilots_passengers,person_list from view4 join view3 on airplane_list = locationID;
 
 -- [22] people_on_the_ground()
 -- -----------------------------------------------------------------------------
