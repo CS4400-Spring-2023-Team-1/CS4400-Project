@@ -562,29 +562,21 @@ drop procedure if exists passengers_disembark;
 delimiter //
 create procedure passengers_disembark (in ip_flightID varchar(50))
 sp_main: begin
-declare vrouteID varchar(50);
-declare vlegID varchar(50);
-declare vprogress varchar(50);
-declare vairportID varchar(50);
-declare vlocation varchar(50);
-
-
-set vrouteID = (select routeID from flight where flightID = ip_flightID);
-
-set vlegID = (select legID from route_path where routeID = vrouteID and sequence = vprogress);
-
-set vprogress = (select progress from flight where flightID = ip_flightID);
-
-set vairportID = (select arrival from leg where legID = vlegID);
-
-set vlocation = (select locationID from airport where airportID = vairportID);
-
+declare arouteID varchar(50);
+declare alegID varchar (50) ;
+declare curprog varchar(50);
+declare aairportID varchar (50);
+declare location varchar(50);
 if not exists(select routeID from flight where airplane_status = 'on_ground' and flightID = ip_flightID) then leave sp_main; end if;
+set curprog = (select progress from flight where flightID = ip_flightID);
+set arouteID = (select routeID from flight where flightID = ip_flightID);
+set alegID = (select legID from route_path where routeID = arouteID and sequence = curprog) ;
+set aairportID = (select arrival from leg where legID = alegID);
+set location = (select locationID from airport where airportID = aairportID);
 
-update person set locationID = vlocation where personID in 
-(select customer from ticket where carrier = ip_flightID and deplane_at = vairportID);
-
-
+update person set
+locationID = location where personID in (select customer from ticket where carrier
+= ip_flightID and deplane_at = aairportID );
 end //
 delimiter ;
 
