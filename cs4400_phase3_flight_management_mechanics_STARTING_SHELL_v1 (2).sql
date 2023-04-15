@@ -829,10 +829,40 @@ ON arrival_grouping.departing_from = num_flights_grouping.departing_from;
 -- -----------------------------------------------------------------------------
 /* This view describes where people who are currently airborne are located. */
 -- -----------------------------------------------------------------------------
+create or replace view table1 as
+select  count(*) as num_airplanes, group_concat(distinct locationID) as 'airplane_list', flightID, min(next_time) as 'earliest_arrival', max(next_time) as 'latest_arrival'  from airplane join flight 
+on airlineID = support_airline and support_tail = tail_num where tail_num in (select support_tail from flight where airplane_status like '%in_flight') group by flightID;
+
+create or replace view people as
+SELECT
+
+  p.personid,
+  p.locationID,
+  pi.personid AS pilot_personid,
+  pa.personid AS passenger_personid
+FROM person p
+LEFT JOIN pilot as pi ON p.personid = pi.personID
+LEFT JOIN passenger as pa ON p.personid = pa.personID;
+
+create or replace view view2 as
+select * from flight, airplane where support_tail = tail_num;
+
+create or replace view view3 as
+select people.locationID, flightID as fID, sum(case when pilot_personid is not null then 1 else 0 end) as num_pilots, sum(case when passenger_personid is not null then 1 else 0 end) as num_passengers, count(distinct personID) as joint_pilots_passengers , group_concat(personID) as person_list from people join view2 where people.locationID = view2.locationID and tail_num in (select support_tail from flight where airplane_status like '%in_flight') group by people.locationID, flightID;
+
+create or replace view view4 as
+select departure, arrival,num_airplanes, airplane_list, earliest_arrival,latest_arrival from table1, leg, flight, route_path, route_summary
+where flight.flightID = table1.flightID 
+and route_path.routeID = flight.routeID 
+and route_summary.route = flight.routeID 
+and leg.legID = route_path.legID 
+and route_path.sequence = flight.progress;
+
 create or replace view people_in_the_air (departing_from, arriving_at, num_airplanes,
 	airplane_list, flight_list, earliest_arrival, latest_arrival, num_pilots,
 	num_passengers, joint_pilots_passengers, person_list) as
-    select null, null, null, null, null, null, null, null, null, null, null;
+
+select departure,arrival,num_airplanes,airplane_list,fID as flight_list, earliest_arrival,latest_arrival,num_pilots,num_passengers,joint_pilots_passengers,person_list from view4 join view3 on airplane_list = locationID;
 
 -- [22] people_on_the_ground()
 -- -----------------------------------------------------------------------------
