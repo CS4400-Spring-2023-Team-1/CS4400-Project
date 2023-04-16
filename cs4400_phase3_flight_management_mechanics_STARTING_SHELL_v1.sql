@@ -868,9 +868,25 @@ select departure,arrival,num_airplanes,airplane_list,fID as flight_list, earlies
 -- -----------------------------------------------------------------------------
 /* This view describes where people who are currently on the ground are located. */
 -- -----------------------------------------------------------------------------
+create or replace view people as
+SELECT
+
+  p.personid,
+  p.locationID,
+  pi.personid AS pilot_personid,
+  pa.personid AS passenger_personid
+FROM (person p
+LEFT JOIN pilot as pi ON p.personid = pi.personID
+LEFT JOIN passenger as pa ON p.personid = pa.personID)
+;
 create or replace view people_on_the_ground (departing_from, airport, airport_name,
 	city, state, num_pilots, num_passengers, joint_pilots_passengers, person_list) as
-select null, null, null, null, null, 0, 0, null, null;
+select airport.airportID as 'departing_from', airport.locationID as 'airport', airport_name, city, state, 
+
+sum(case when pilot_personid is not null then 1 else 0 end) as num_pilots, 
+sum(case when passenger_personid is not null then 1 else 0 end) as num_passengers, 
+count(distinct personID) as joint_pilots_passengers , group_concat(personID) 
+as person_list from people left join airport on airport.locationID = people.locationID where people.locationID not like 'plane%' group by airportID ,airport.locationID;
 
 -- [23] route_summary()
 -- -----------------------------------------------------------------------------
