@@ -829,6 +829,15 @@ ON arrival_grouping.departing_from = num_flights_grouping.departing_from;
 -- -----------------------------------------------------------------------------
 /* This view describes where people who are currently airborne are located. */
 -- -----------------------------------------------------------------------------
+create or replace view route_summ  as
+select route_path.routeID as route,
+count( distinct legID) as num_legs, 
+GROUP_CONCAT( distinct  route_path.legID order by sequence) as leg_sequence, 
+round(sum(distance)/greatest(1,count(distinct flightID))) as route_length,
+count(Distinct flightID)as num_flights, group_concat(distinct flight.flightID) as flight_list, 
+group_concat(distinct concat( leg.departure, '->', leg.arrival) order by sequence) as 'airport_sequence'
+from route_path natural join leg left outer join flight on flight.routeID = route_path.routeID group by route_path.routeID;
+
 
 create or replace view table1 as
 select  count(*) as num_airplanes, group_concat(distinct locationID) as 'airplane_list', flightID, min(next_time) as 'earliest_arrival', max(next_time) as 'latest_arrival'  from airplane join flight 
@@ -852,10 +861,10 @@ create or replace view view3 as
 select people.locationID, flightID as fID, sum(case when pilot_personid is not null then 1 else 0 end) as num_pilots, sum(case when passenger_personid is not null then 1 else 0 end) as num_passengers, count(distinct personID) as joint_pilots_passengers , group_concat(personID) as person_list from people join view2 where people.locationID = view2.locationID and tail_num in (select support_tail from flight where airplane_status like '%in_flight') group by people.locationID, flightID;
 
 create or replace view view4 as
-select departure, arrival,num_airplanes, airplane_list, earliest_arrival,latest_arrival from table1, leg, flight, route_path, route_summary
+select departure, arrival,num_airplanes, airplane_list, earliest_arrival,latest_arrival from table1, leg, flight, route_path, route_summ
 where flight.flightID = table1.flightID 
 and route_path.routeID = flight.routeID 
-and route_summary.route = flight.routeID 
+and route_summ.route = flight.routeID 
 and leg.legID = route_path.legID 
 and route_path.sequence = flight.progress;
 				
