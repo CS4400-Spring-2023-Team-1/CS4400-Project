@@ -375,6 +375,49 @@ delimiter //
 create procedure flight_landing (in ip_flightID varchar(50))
 sp_main: begin
 
+	declare current_leg integer default 0;
+    declare current_status varchar(100) default null;
+    declare curr_next_time time default null;
+    declare new_airplane_status varchar(100) default null;
+    declare new_next_time time default null;
+
+    declare supp_airline varchar(50) default null;
+    declare supp_tail varchar(50) default null;
+    declare num_miles integer default 0;
+    declare plane_num varchar(50) default null;
+                
+	# Make sure that the flightID exists
+	if (select count(*) from flight f where f.flightID = ip_flightID) < 1 then leave sp_main; end if;
+    
+    set current_leg = (select progress from flight f where f.flightID = ip_flightID);
+	set curr_next_time = (select next_time from flight f where f.flightID = ip_flightID);
+    set current_status = (select airplane_status from flight f where f.flightID = ip_flightID);
+
+	# Make sure that the flight has made any amount of progress
+    if (current_leg < 1) then leave sp_main; end if;
+    
+    # Make sure that the flight is not on the ground
+    if (current_status = 'on_ground') then leave sp_main; end if;
+    
+    set new_airplane_status = 'on_ground';
+    set new_next_time = ADDTIME(curr_next_time, MAKETIME(1, 0, 0));
+    
+    update flight f set f.airplane_status = new_airplane_status, f.next_time = new_next_time
+			where f.flightID = ip_flightID;
+            
+	set supp_airline = (select support_airline from flight f where f.flightID = ip_flightID);
+    set supp_tail = (select support_tail from flight f where f.flightID = ip_flightID);
+	
+    update pilot p set p.experience = p.experience + 1 where p.flying_airline = supp_airline
+			and p.flying_tail = supp_tail;
+            
+	set num_miles = (select l.distance from (leg l join route_path rp on l.legID = rp.legID) 
+                         join flight f on rp.routeID = f.routeID and rp.sequence = f.progress where f.flightID = ip_flightID);
+	set plane_num = (select locationID from airplane a where a.airlineID = supp_airline and a.tail_num = supp_tail);
+            
+	update passenger p set p.miles = p.miles + num_miles where p.personID in 
+			(select pe.personID from person pe where pe.locationID = plane_num);
+
 end //
 delimiter ;
 
@@ -392,86 +435,64 @@ delimiter //
 create procedure flight_takeoff (in ip_flightID varchar(50))
 sp_main: begin
 
-	DECLARE plane_type VARCHAR(100) DEFAULT NULL;
-	DECLARE num_pilots INTEGER DEFAULT 0;
-	DECLARE flight_shortage BOOLEAN DEFAULT FALSE;
-    
-    DECLARE current_progress INTEGER DEFAULT 0;
-    DECLARE current_status VARCHAR(100) DEFAULT NULL;
-    DECLARE num_legs INTEGER DEFAULT 0;
-    DECLARE curr_time TIME DEFAULT NULL;
-    
-	DECLARE progress INTEGER DEFAULT 0;
-    DECLARE airplane_status VARCHAR(100) DEFAULT NULL;
-    DECLARE next_time TIME DEFAULT NULL;
-    
-    DECLARE airplane_speed INTEGER DEFAULT 0;
-    DECLARE distance INTEGER DEFAULT 0;
-    DECLARE num_minutes INTEGER DEFAULT 0;
+    declare current_leg integer default 0;
+    declare current_status varchar(100) default null;
+    declare num_legs integer default 0;
+    declare curr_next_time time default null;
+    declare plane_type varchar(100) default null;
+	declare num_pilots integer default 0;
+	declare flight_shortage boolean default false;
+	declare new_progress integer default 0;
+    declare new_airplane_status varchar(100) default null;
+    declare add_time time default null;
+    declare new_next_time time default null;
+    declare airplane_speed integer default 0;
+    declare distance integer default 0;
                 
 	# Make sure that the flightID exists
-	IF (SELECT COUNT(*) FROM flight WHERE flight.flightID = ip_flightID) < 1 THEN
-		LEAVE sp_main;
-	END IF;
+	if (select count(*) from flight f where f.flightID = ip_flightID) < 1 then leave sp_main; end if;
     
-    SET current_progress = (SELECT progress FROM flight WHERE flight.flightID = ip_flightID);
-    SET num_legs = (SELECT COUNT(*) FROM flight JOIN route_path ON flight.routeID = route_path.routeID
-					WHERE flight.flightID = ip_flightID);
-                    
-	SET curr_time = (SELECT next_time FROM flight WHERE flight.flightID = ip_flightID);
-    SET current_status = (SELECT airplane_status FROM flight WHERE flight.flightID = ip_flightID);
+    set current_leg = (select progress from flight f where f.flightID = ip_flightID);
+    set num_legs = (select count(*) from flight f join route_path rp on f.routeID = rp.routeID where f.flightID = ip_flightID);
+	set curr_next_time = (select next_time from flight f where f.flightID = ip_flightID);
+    set current_status = (select airplane_status from flight f where f.flightID = ip_flightID);
     
     # Make sure that the flight can take off (i.e. not on last leg)
-	IF current_progress >= num_legs THEN
-		LEAVE sp_main;
-	END IF;
+	if current_leg >= num_legs then leave sp_main; end if;
 
     # Make sure that the flight is not already in the air
-    IF current_status = 'in_flight' THEN
-		LEAVE sp_main;
-	END IF;
+    if current_status = 'in_flight' then leave sp_main; end if;
     
-    SET plane_type = (SELECT airplane.plane_type FROM airplane JOIN flight 
-						ON airplane.airlineID = flight.support_airline AND airplane.tail_num = flight.support_tail 
-						WHERE flight.flightID = ip_flightID);
-                        
-	SET num_pilots = (SELECT COUNT(*) FROM (airplane JOIN flight 
-						ON airplane.airlineID = flight.support_airline AND airplane.tail_num = flight.support_tail)  
-						JOIN pilot ON airplane.airlineID = pilot.flying_airline AND airplane.tail_num = pilot.flying_tail
-						WHERE flight.flightID = ip_flightID);
-                        
+    set plane_type = (select a.plane_type from airplane a join flight f on a.airlineID = f.support_airline 
+					and a.tail_num = f.support_tail where f.flightID = ip_flightID);
+    set num_pilots = (select count(*) from (pilot p join flight f on p.flying_airline = f.support_airline 
+					and p.flying_tail = f.support_tail) where f.flightID = ip_flightID); 
+    
 	# Propellor driven airplanes should have at least one pilot assigned
     # Jet driven airplanes should have at least two pilots assigned
-	IF (plane_type = 'prop' AND num_pilots < 1) OR (plane_type = 'jet' AND num_pilots < 2) THEN
-		SET flight_shortage = TRUE;
-	END IF;
+	if (plane_type = 'prop' and num_pilots < 1) or (plane_type = 'jet' and num_pilots < 2) then set flight_shortage = true; end if;
     
     # Compute next_time with airplane_speed and distance
-    SET airplane_speed = (SELECT airplane.speed FROM airplane JOIN flight 
-							ON airplane.airlineID = flight.support_airline AND airplane.tail_num = flight.support_tail 
-							WHERE flight.flightID = ip_flightID);
-                            
-	SET distance = (SELECT leg.distance FROM (leg JOIN route_path
-						ON leg.legID = route_path.legID) 
-                        JOIN flight ON route_path.routeID = flight.routeID AND route_path.sequence = flight.progress + 1
-                        WHERE flight.flightID = ip_flightID);
-                        
-	### NUM_MINUTES INCORRECT (go back to this)
-    SET num_minutes = (distance / airplane_speed) * 60;
-    IF flight_shortage THEN
-		SET progress = current_progress;
-        SET airplane_status = 'on_ground';
-        # Delay by 30 min
-        SET num_minutes = 30;
-        SET next_time = cast(ADDTIME(curr_time, num_minutes) AS TIME);
-	ELSE 
-		SET progress = current_progress + 1;
-        SET airplane_status = 'in_flight';
-        SET next_time = cast(ADDTIME(curr_time, num_minutes) AS TIME);
-	END IF;
+    set airplane_speed = (select a.speed from airplane a join flight f on a.airlineID = f.support_airline
+						 and a.tail_num = f.support_tail where f.flightID = ip_flightID);
+ 	set distance = (select l.distance from (leg l join route_path rp on l.legID = rp.legID) 
+                         join flight f on rp.routeID = f.routeID and rp.sequence = f.progress + 1 where f.flightID = ip_flightID);
+    
+    if flight_shortage then
+		# Delay by 30 min
+		set add_time = MAKETIME(0, 30, 0);
+        set new_progress = current_leg;
+        set new_airplane_status = 'on_ground';
+	else 
+		set add_time = MAKETIME(distance / airplane_speed, 0, 0);
+        set new_progress = current_leg + 1;
+        set new_airplane_status = 'in_flight';
+    end if;
+    
+    set new_next_time = ADDTIME(curr_next_time, add_time);
         
-	UPDATE flight SET flight.progress = progress, flight.airplane_status = airplane_status, 
-		flight.next_time = next_time WHERE flight.flightID = ip_flightID;
+	update flight f set f.progress = new_progress, f.airplane_status = new_airplane_status, 
+		f.next_time = new_next_time where f.flightID = ip_flightID;
 end //
 delimiter ;
 
@@ -593,6 +614,74 @@ delimiter //
 create procedure assign_pilot (in ip_flightID varchar(50), ip_personID varchar(50))
 sp_main: begin
 
+	declare plane_location varchar(50) default null;
+    declare pilot_location varchar(50) default null;
+    declare plane_type varchar(100) default null;
+    declare supp_airline varchar(50) default null;
+    declare supp_tail varchar(50) default null;
+    declare routeID varchar(50) default null;
+    declare current_leg_num integer default 0;
+    declare current_legID varchar(50) default null;
+    declare num_legs integer default 0;
+    declare airportID char(3) default null;
+    declare current_status varchar(100) default null;
+    declare plane_num varchar(50) default null;
+    
+    # Make sure that the flightID exists
+	if (select count(*) from flight f where f.flightID = ip_flightID) < 1 then leave sp_main; end if;
+    
+    # Make sure that personID exists
+    if (select count(*) from person p where p.personID = ip_personID) < 1 then leave sp_main; end if;
+    
+    set supp_airline = (select f.support_airline from flight f where f.flightID = ip_flightID);
+    set supp_tail = (select f.support_tail from flight f where f.flightID = ip_flightID);
+    set plane_type = (select a.plane_type from airplane a where a.airlineID = supp_airline and a.tail_num = supp_tail);
+    set routeID = (select f.routeID from flight f where f.flightID = ip_flightID);
+    set current_status = (select f.airplane_status from flight f where f.flightID = ip_flightID);
+    
+    # Make sure that the flight is not already in the air
+    if current_status = 'in_flight' then leave sp_main; end if;
+    
+    # Make sure that person has valid license for plane_type (i.e. by extension is pilot)
+    if (select count(*) from pilot_licenses pl where pl.personID = ip_personID and pl.license = plane_type) < 1 then leave sp_main; end if;
+    
+    set current_leg_num = (select f.progress from flight f where f.flightID = ip_flightID);
+    set num_legs = (select count(*) from flight f join route_path rp on f.routeID = rp.routeID where f.flightID = ip_flightID);
+    
+    # Cannot assign pilot if flight on last leg 
+    if (current_leg_num = num_legs) then leave sp_main; end if;
+    
+    # If plane has not made any progress, use departing airport, otherwise use arriving
+    if (current_leg_num = 0) then
+		set current_legID = (select rp.legID from route_path rp where rp.routeID = routeID and rp.sequence = current_leg_num + 1);
+        set airportID = (select l.departure from leg l where l.legID = current_legID);
+	else 
+		set current_legID = (select rp.legID from route_path rp where rp.routeID = routeID and rp.sequence = current_leg_num);
+        set airportID = (select l.arrival from leg l where l.legID = current_legID);
+    end if;
+    
+    # In form port_1
+    set plane_location = (select a.locationID from airport a where a.airportID = airportID);
+    set pilot_location = (select p.locationID from person p where p.personID = ip_personID);
+    
+    # In form plane_1
+    set plane_num = (select a.locationID from airplane a where a.airlineID = supp_airline and a.tail_num = supp_tail);
+    
+    if (plane_location != pilot_location) then leave sp_main; end if;
+    
+    # Pilot can not already be assigned to flight
+    if (select count(*) from pilot p where p.personID = ip_personID and p.flying_airline is null and p.flying_tail is null) = 0 then leave sp_main; end if;
+    
+	#select supp_airline;
+    #select supp_tail;
+    #select current_leg_num;
+    #select routeID;
+    #select plane_location;
+    #select pilot_location;
+    
+    update pilot p set p.flying_airline = supp_airline, p.flying_tail = supp_tail where p.personID = ip_personID;
+    update person p set p.locationID = plane_num where p.personID = ip_personID;
+
 end //
 delimiter ;
 
@@ -605,6 +694,58 @@ drop procedure if exists recycle_crew;
 delimiter //
 create procedure recycle_crew (in ip_flightID varchar(50))
 sp_main: begin
+
+	declare current_leg_num integer default 0;
+    declare num_legs integer default 0;
+    declare current_status varchar(100) default null;
+    declare supp_airline varchar(50) default null;
+    declare supp_tail varchar(50) default null;
+    declare plane_num varchar(50) default null;
+    declare num_passengers_on integer default 0;
+    declare routeID varchar(50) default null;
+    declare current_legID varchar(50) default null;
+    declare airportID char(3) default null;
+    declare portID varchar(50) default null;
+    
+    # Make sure that the flightID exists
+	if (select count(*) from flight f where f.flightID = ip_flightID) < 1 then leave sp_main; end if;
+    
+    set current_leg_num = (select f.progress from flight f where f.flightID = ip_flightID);
+    set num_legs = (select count(*) from flight f join route_path rp on f.routeID = rp.routeID where f.flightID = ip_flightID);
+    set current_status = (select f.airplane_status from flight f where f.flightID = ip_flightID);
+    set supp_airline = (select f.support_airline from flight f where f.flightID = ip_flightID);
+    set supp_tail = (select f.support_tail from flight f where f.flightID = ip_flightID);
+    
+    # Cannot relieve crew if not on last leg (i.e. flight has not ended)
+    if (current_leg_num != num_legs) then leave sp_main; end if;
+    
+    # Cannot relieve crew if in flight
+    if current_status = 'in_flight' then leave sp_main; end if;
+    
+    set plane_num = (select a.locationID from airplane a where a.airlineID = supp_airline and a.tail_num = supp_tail);
+    set num_passengers_on = (select count(*) from person p where p.locationID = plane_num and p.personID in 
+			(select personID from passenger));
+    
+    select current_leg_num;
+    select num_legs;
+    select current_status;
+    select supp_airline;
+    select supp_tail;
+    select plane_num;
+    select num_passengers_on;
+    
+    if num_passengers_on > 0 then leave sp_main; end if;
+            
+	set routeID = (select f.routeID from flight f where f.flightID = ip_flightID);
+	set current_legID = (select rp.legID from route_path rp where rp.routeID = routeID and rp.sequence = current_leg_num);
+	set airportID = (select l.arrival from leg l where l.legID = current_legID);
+    set portID = (select a.locationID from airport a where a.airportID = airportID);
+	
+    update person p set p.locationID = portID where p.personID in (select pi.personID from pilot pi 
+			where pi.flying_airline = supp_airline and pi.flying_tail = supp_tail);
+            
+    update pilot p set p.flying_airline = null, p.flying_tail = null where p.flying_airline = supp_airline
+			and p.flying_tail = supp_tail;  
 
 end //
 delimiter ;
