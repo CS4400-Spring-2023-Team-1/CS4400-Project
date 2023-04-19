@@ -836,7 +836,7 @@ drop procedure if exists remove_pilot_role;
 delimiter //
 create procedure remove_pilot_role (in ip_personID varchar(50))
 sp_main: begin
-	/*drop table if exists route_length;
+	drop table if exists route_length;
 	create table route_length as select routeID, max(sequence) as 'max'  from route_path natural join flight group by routeID ;
 	drop table if exists temp1 ;
 	create temporary table temp1 as select * from route_length as rp natural join flight ;
@@ -864,7 +864,7 @@ sp_main: begin
 	tblTmp);
 
 	drop table route_length;
-	drop table temp1;*/
+	drop table temp1;
 
 end //
 delimiter ;
