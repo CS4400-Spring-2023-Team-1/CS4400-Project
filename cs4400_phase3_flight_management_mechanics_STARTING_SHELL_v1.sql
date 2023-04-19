@@ -359,6 +359,27 @@ delimiter //
 create procedure extend_route (in ip_routeID varchar(50), in ip_legID varchar(50))
 sp_main: begin
 
+	declare last_airport_rp char(3) default null;
+    declare departing_airport_new_leg char(3) default null;
+    declare last_leg_num integer default 0;
+    declare last_legID varchar(50) default null;
+	
+    # Route must already exist
+	if (select count(*) from route_path rp where rp.routeID = ip_routeID) = 0 then leave sp_main; end if;
+    
+    # Leg must exist
+    if (select count(*) from leg l where l.legID = ip_legID) = 0 then leave sp_main; end if;
+    
+    set last_leg_num = (select count(*) from route_path rp where rp.routeID = ip_routeID);
+    set last_legID = (select rp.legID from route_path rp where rp.routeID = ip_routeID and rp.sequence = last_leg_num);
+    set last_airport_rp = (select l.arrival from leg l where l.legID = last_legID);
+    set departing_airport_new_leg = (select l.departure from leg l where l.legID = ip_legID);
+    
+    # Current arrival airport for end route_path must be departing airport of new leg
+    if (last_airport_rp != departing_airport_new_leg) then leave sp_main; end if;
+    
+    insert into route_path values (ip_routeID, ip_legID, last_leg_num + 1);
+
 end //
 delimiter ;
 
