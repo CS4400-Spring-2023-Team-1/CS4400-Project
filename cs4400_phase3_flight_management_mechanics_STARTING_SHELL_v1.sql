@@ -1111,40 +1111,34 @@ drop procedure if exists simulation_cycle;
 delimiter //
 create procedure simulation_cycle ()
 sp_main: begin
-DECLARE needed_flightID VARCHAR(50);
+	DECLARE needed_flightID VARCHAR(50);
     DECLARE needed_airplane_status VARCHAR(100);
 	DECLARE needed_routeID VARCHAR(50) ;
 
-	# Sort all the flights, then get the one that would be at the top
-	CREATE or replace view sortedflights AS
-		SELECT * FROM flight WHERE flightID IN (SELECT flight_list FROM flights_in_the_air) 
-		OR flightID IN (SELECT flight_list FROM flights_on_the_ground)
-		ORDER BY next_time ASC, airplane_status ASC, progress desc, flightID ASC;
-    
     # Get the first ordered flight
-    
-	SET needed_flightID = (SELECT flightID FROM sortedflights LIMIT 1);
-	select * from flight where flightID = needed_flightID;
---	SET needed_routeID = (SELECT routeID FROM sortedflights WHERE flightID = needed_flightID);
--- 	SET needed_airplane_status = (SELECT airplane_status FROM sortedflights WHERE flightID = needed_flightID);
--- 	IF 'in_flight' = needed_airplane_status THEN
--- 		CALL flight_landing(needed_flightID); # Already handles new time
--- 		CALL passengers_disembark(needed_flightID);
---         # If this just landed from its last leg, then this flight is done!
+    SET needed_flightID = (SELECT flightID FROM flight WHERE flightID IN (SELECT flight_list FROM flights_in_the_air) 
+		OR flightID IN (SELECT flight_list FROM flights_on_the_ground) ORDER BY next_time ASC, airplane_status ASC, progress desc, flightID ASC LIMIT 1);
+        
+	SET needed_routeID = (SELECT routeID FROM flight WHERE flightID = needed_flightID);
+	SET needed_airplane_status = (SELECT airplane_status FROM flight WHERE flightID = needed_flightID);
+	IF 'in_flight' = needed_airplane_status THEN
+		CALL flight_landing(needed_flightID); # Already handles new time
+		CALL passengers_disembark(needed_flightID);
+		# If this just landed from its last leg, then this flight is done!
 
--- 		IF (SELECT progress FROM sortedflights WHERE flightID = needed_flightID) = (SELECT MAX(sequence) FROM route_path WHERE routeID = needed_routeID) THEN
--- 			CALL retire_flight(needed_flightID);
--- 			CALL recycle_crew(needed_flight);
--- 		END IF;
--- 	ELSEIF 'on_ground' = needed_airplane_status THEN
--- 		IF (SELECT progress FROM sortedflights WHERE flightID = needed_flightID) = (SELECT MAX(sequence) FROM route_path WHERE routeID = needed_routeID) THEN
--- 			CALL retire_flight(needed_flightID);
--- 			CALL recycle_crew(needed_flight);
--- 		elseif (SELECT progress FROM sortedflights WHERE flightID = needed_flightID) != (SELECT MAX(sequence) FROM route_path WHERE routeID = needed_routeID) then
--- 		CALL flight_takeoff(needed_flightID); # Already handles new time
--- 		CALL passengers_board(needed_flightID);
---         end if;
--- 	END IF;
+		IF (SELECT progress FROM flight WHERE flightID = needed_flightID) = (SELECT MAX(sequence) FROM route_path WHERE routeID = needed_routeID) THEN
+			CALL retire_flight(needed_flightID);
+			CALL recycle_crew(needed_flight);
+		END IF;
+	ELSEIF 'on_ground' = needed_airplane_status THEN
+		IF (SELECT progress FROM flight WHERE flightID = needed_flightID) = (SELECT MAX(sequence) FROM route_path WHERE routeID = needed_routeID) THEN
+			CALL retire_flight(needed_flightID);
+			CALL recycle_crew(needed_flight);
+		elseif (SELECT progress FROM flight WHERE flightID = needed_flightID) != (SELECT MAX(sequence) FROM route_path WHERE routeID = needed_routeID) then
+			CALL flight_takeoff(needed_flightID); # Already handles new time
+			CALL passengers_board(needed_flightID);
+		end if;
+	END IF;
 
 end //
 delimiter ;
